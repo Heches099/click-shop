@@ -1,0 +1,5 @@
+- [ ] Update `onboarding_screen.dart` with full-screen background images
+- [ ] Add dark/light gradient overlays for readability
+- [ ] Implement minimalist glassmorphic navigation buttons
+- [ ] Add floating product "tag" elements for the 1000/10 feel
+- [ ] Verify asset paths and run `flutter analyze`

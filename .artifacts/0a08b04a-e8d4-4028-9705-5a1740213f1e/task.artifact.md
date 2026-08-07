@@ -1,0 +1,16 @@
+- [x] Core Infrastructure & Constants
+    - [x] Add `google_mobile_ads` to `pubspec.yaml`
+    - [x] Update `AppConstants` with affiliate fields
+    - [x] Initialize Hive for affiliate data
+- [x] Affiliate Data Layer
+    - [x] Create `AffiliateDataSourceImpl` (persistent Hive implementation)
+    - [x] Register Affiliate components in `service_locator.dart`
+- [x] Real Ads Integration
+    - [x] Enable `AdConfig` and add test IDs
+    - [x] Update `GoogleAdBanner` to support mobile via `google_mobile_ads`
+- [x] Referral Tracking & Attribution
+    - [x] Implement ref-code detection in `MainScaffold` or router
+    - [x] Update `CheckoutScreen` to trigger commission recording on sale
+- [x] Futuristic Profile HUD
+    - [x] Add "Live Earnings" section to `ProfileScreen`
+    - [x] Integrate with `affiliateStatsProvider` for real-time updates

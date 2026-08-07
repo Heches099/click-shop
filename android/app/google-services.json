@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "821474654425",
+    "project_id": "click-shop-d62ad",
+    "storage_bucket": "click-shop-d62ad.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:821474654425:android:90fbf0b4ea10db2cfda6c8",
+        "android_client_info": {
+          "package_name": "com.example.click_shop"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBMIl-aOzJaS2d29-ocCRXakCsIhnlrCn0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

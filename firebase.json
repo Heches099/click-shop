@@ -1,0 +1,39 @@
+{
+    "hosting": {
+        "public": "build/web",
+        "ignore": [
+            "firebase.json",
+            "**/.*",
+            "**/node_modules/**"
+        ],
+        "rewrites": [
+            {
+                "source": "**",
+                "destination": "/index.html"
+            }
+        ]
+    },
+    "flutter": {
+        "platforms": {
+            "android": {
+                "default": {
+                    "projectId": "click-shop-d62ad",
+                    "appId": "1:821474654425:android:90fbf0b4ea10db2cfda6c8",
+                    "fileOutput": "android/app/google-services.json"
+                }
+            },
+            "dart": {
+                "lib/firebase_options.dart": {
+                    "projectId": "click-shop-d62ad",
+                    "configurations": {
+                        "android": "1:821474654425:android:90fbf0b4ea10db2cfda6c8",
+                        "ios": "1:821474654425:ios:1f5b92bc4f941e28fda6c8",
+                        "macos": "1:821474654425:ios:1f5b92bc4f941e28fda6c8",
+                        "web": "1:821474654425:web:82bd79764a7a438cfda6c8",
+                        "windows": "1:821474654425:web:d676c165b1e21709fda6c8"
+                    }
+                }
+            }
+        }
+    }
+}
