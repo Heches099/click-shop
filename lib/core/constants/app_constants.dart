@@ -1,5 +1,5 @@
 class AppConstants {
-  static const String appName = 'ShopEase';
+  static const String appName = 'ClickShop';
   static const String baseUrl = 'https://api.example.com/v1';
   static const String tokenKey = 'auth_token';
   static const String userBox = 'userBox';
@@ -8,9 +8,14 @@ class AppConstants {
   static const String recentViewsBox = 'recentViewsBox';
   static const String affiliateBox = 'affiliateBox';
 
-  /// Toggle this to false if you want to use local mock data (Hive) 
-  /// instead of live Firestore data for testing.
-  static const bool useRemoteDataSource = true;
+  /// Stripe publishable key (safe to include in the client).
+  /// Replace with your real key before going live.
+  static const String stripePublishableKey = 'pk_test_REPLACE_ME';
+
+  /// Stripe secret key.
+  /// NEVER ship this in a client app in production - create PaymentIntents
+  /// on your backend (e.g. a Firebase Cloud Function) instead.
+  static const String stripeSecretKey = 'sk_test_REPLACE_ME';
 
   /// Public store URL used to build affiliate referral links.
   /// Replace with your deployed web/domain URL before going live.

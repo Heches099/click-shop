@@ -6,10 +6,12 @@ import '../../../config/design_tokens.dart';
 import '../../../core/services/service_locator.dart';
 import '../../../core/utils/responsive.dart';
 import '../../../domain/entities/order.dart';
+import '../../../domain/entities/user.dart';
 import '../../../domain/usecases/affiliate_usecase.dart';
 import '../../../core/services/payments/payment_service.dart';
 import '../../../core/services/analytics/analytics_service.dart';
 import '../../affiliate/providers/affiliate_provider.dart';
+import '../../auth/providers/auth_provider.dart';
 import '../../cart/providers/cart_provider.dart';
 import '../../orders/providers/orders_provider.dart';
 import '../../core/widgets/premium_button.dart';
@@ -27,32 +29,53 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   int _currentStep = 0;
   int _selectedAddressIndex = 0;
   int _selectedPaymentIndex = 0;
-  final List<Address> _addresses = [
-    const Address(
-      id: 'addr_home',
-      name: 'Alex Johnson',
-      phone: '+1 555 0100',
-      street: '123 Apple Street',
-      city: 'Cupertino',
-      state: 'CA',
-      zipCode: '95014',
-      country: 'USA',
-      isDefault: true,
-    ),
-    const Address(
-      id: 'addr_office',
-      name: 'Alex Johnson',
-      phone: '+1 555 0101',
-      street: 'One Infinite Loop',
-      city: 'Cupertino',
-      state: 'CA',
-      zipCode: '95014',
-      country: 'USA',
-    ),
-  ];
+  late List<Address> _addresses;
+  String? _seededUserId;
+  bool _addressesSeeded = false;
+
+  String _recipientName(AppUser? user) {
+    if (user == null) return 'Guest';
+    final name = user.name?.trim();
+    if (name != null && name.isNotEmpty) return name;
+    final prefix = user.email.split('@').first.trim();
+    return prefix.isEmpty ? 'User' : prefix;
+  }
+
+  List<Address> _buildDefaultAddresses(String name) => [
+        Address(
+          id: 'addr_home',
+          name: name,
+          phone: '',
+          street: '123 Apple Street',
+          city: 'Cupertino',
+          state: 'CA',
+          zipCode: '95014',
+          country: 'USA',
+          isDefault: true,
+        ),
+        Address(
+          id: 'addr_office',
+          name: name,
+          phone: '',
+          street: 'One Infinite Loop',
+          city: 'Cupertino',
+          state: 'CA',
+          zipCode: '95014',
+          country: 'USA',
+        ),
+      ];
+
+  void _seedAddresses(AppUser? user) {
+    if (_addressesSeeded && _seededUserId == user?.id) return;
+    _addresses = _buildDefaultAddresses(_recipientName(user));
+    _seededUserId = user?.id;
+    _addressesSeeded = true;
+  }
 
   @override
   Widget build(BuildContext context) {
+    final user = ref.watch(authProvider).whenOrNull(data: (u) => u);
+    _seedAddresses(user);
     final cartItems = ref.watch(cartProvider);
 
     return Scaffold(

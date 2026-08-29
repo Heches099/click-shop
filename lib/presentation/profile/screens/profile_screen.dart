@@ -2,6 +2,8 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../domain/entities/user.dart';
+import '../../auth/providers/auth_provider.dart';
 import '../widgets/cyber_background_painter.dart';
 import '../widgets/neon_border_avatar.dart';
 import '../../affiliate/providers/affiliate_provider.dart';
@@ -54,6 +56,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
     const accentColor = Color(0xFFD4AF37); // gold
     const secondaryColor = Color(0xFF00897B); // teal
 
+    final authState = ref.watch(authProvider);
+
     return Scaffold(
       backgroundColor: const Color(0xFF0A0A0E),
       body: Stack(
@@ -81,48 +85,32 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                   child: Column(
                     children: [
                       const SizedBox(height: 10),
-                      _buildClassicCyberHeader(
-                          textTheme, primaryColor, accentColor, secondaryColor),
-                      const SizedBox(height: 32),
-                      _buildAffiliateStatsRow(accentColor),
-                      const SizedBox(height: 32),
-                      _buildMenuSection(context, 'SYSTEM ACCESS', [
-                        _MenuItem(
-                          icon: Icons.receipt_long_outlined,
-                          title: 'My Orders',
-                          onTap: () => context.push('/orders'),
-                          accentColor: secondaryColor,
+                      authState.when(
+                        loading: () => const SizedBox(
+                          height: 320,
+                          child: Center(
+                            child: CircularProgressIndicator(
+                              color: accentColor,
+                            ),
+                          ),
                         ),
-                        _MenuItem(
-                          icon: Icons.rocket_launch_rounded,
-                          title: 'Affiliate Program',
-                          onTap: () => context.push('/affiliate'),
-                          accentColor: accentColor,
-                        ),
-                        _MenuItem(
-                          icon: Icons.favorite_border,
-                          title: 'Wishlist',
-                          onTap: () => context.push('/wishlist'),
-                          accentColor: secondaryColor,
-                        ),
-                      ]),
-                      const SizedBox(height: 20),
-                      _buildMenuSection(context, 'SECURITY & SETTINGS', [
-                        _MenuItem(
-                          icon: Icons.location_on_outlined,
-                          title: 'Addresses',
-                          onTap: () => context.push('/addresses'),
-                          accentColor: primaryColor,
-                        ),
-                        _MenuItem(
-                          icon: Icons.settings_outlined,
-                          title: 'Settings',
-                          onTap: () => context.push('/settings'),
-                          accentColor: secondaryColor,
-                        ),
-                      ]),
-                      const SizedBox(height: 40),
-                      _buildLogoutButton(textTheme, accentColor),
+                        error: (error, _) =>
+                            _buildErrorState(textTheme, accentColor),
+                        data: (user) {
+                          if (user == null) {
+                            return _buildSignedOutState(
+                                textTheme, accentColor, secondaryColor);
+                          }
+                          return _buildSignedInContent(
+                            context,
+                            textTheme,
+                            user,
+                            primaryColor,
+                            accentColor,
+                            secondaryColor,
+                          );
+                        },
+                      ),
                       const SizedBox(height: 100),
                     ],
                   ),
@@ -133,6 +121,182 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
 
           // Scanning Line Effect
           _buildScanningLine(accentColor),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSignedInContent(
+    BuildContext context,
+    TextTheme textTheme,
+    AppUser user,
+    Color primaryColor,
+    Color accentColor,
+    Color secondaryColor,
+  ) {
+    return Column(
+      children: [
+        _buildClassicCyberHeader(
+            textTheme, user, primaryColor, accentColor, secondaryColor),
+        const SizedBox(height: 32),
+        _buildAffiliateStatsRow(accentColor),
+        const SizedBox(height: 32),
+        _buildMenuSection(context, 'SYSTEM ACCESS', [
+          _MenuItem(
+            icon: Icons.receipt_long_outlined,
+            title: 'My Orders',
+            onTap: () => context.push('/orders'),
+            accentColor: secondaryColor,
+          ),
+          _MenuItem(
+            icon: Icons.rocket_launch_rounded,
+            title: 'Affiliate Program',
+            onTap: () => context.push('/affiliate'),
+            accentColor: accentColor,
+          ),
+          _MenuItem(
+            icon: Icons.favorite_border,
+            title: 'Wishlist',
+            onTap: () => context.push('/wishlist'),
+            accentColor: secondaryColor,
+          ),
+        ]),
+        const SizedBox(height: 20),
+        _buildMenuSection(context, 'SECURITY & SETTINGS', [
+          _MenuItem(
+            icon: Icons.location_on_outlined,
+            title: 'Addresses',
+            onTap: () => context.push('/addresses'),
+            accentColor: primaryColor,
+          ),
+          _MenuItem(
+            icon: Icons.settings_outlined,
+            title: 'Settings',
+            onTap: () => context.push('/settings'),
+            accentColor: secondaryColor,
+          ),
+        ]),
+        const SizedBox(height: 40),
+        _buildLogoutButton(textTheme, accentColor),
+      ],
+    );
+  }
+
+  Widget _buildSignedOutState(
+      TextTheme textTheme, Color accentColor, Color secondaryColor) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(28),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            secondaryColor.withValues(alpha: 0.25),
+            accentColor.withValues(alpha: 0.12),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(30),
+        border: Border.all(color: accentColor.withValues(alpha: 0.3)),
+      ),
+      child: Column(
+        children: [
+          const NeonBorderAvatar(fallbackText: '?', size: 72),
+          const SizedBox(height: 20),
+          Text(
+            'SIGN IN REQUIRED',
+            style: textTheme.titleLarge?.copyWith(
+              color: Colors.white,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 2,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Access your orders, wishlist and affiliate dashboard by signing in to your account.',
+            textAlign: TextAlign.center,
+            style: textTheme.bodyMedium?.copyWith(color: Colors.white60),
+          ),
+          const SizedBox(height: 24),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton(
+              onPressed: () => context.push('/login'),
+              style: FilledButton.styleFrom(
+                backgroundColor: accentColor,
+                foregroundColor: Colors.black,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+              ),
+              child: const Text(
+                'SIGN IN',
+                style: TextStyle(
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 1.6,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton(
+              onPressed: () => context.push('/signup'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: Colors.white,
+                side: BorderSide(color: Colors.white.withValues(alpha: 0.3)),
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+              ),
+              child: const Text(
+                'CREATE ACCOUNT',
+                style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 1.2,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildErrorState(TextTheme textTheme, Color accentColor) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(28),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.04),
+        borderRadius: BorderRadius.circular(30),
+        border: Border.all(color: Colors.redAccent.withValues(alpha: 0.4)),
+      ),
+      child: Column(
+        children: [
+          const Icon(Icons.error_outline_rounded,
+              color: Colors.redAccent, size: 40),
+          const SizedBox(height: 16),
+          Text(
+            'Failed to load profile',
+            style: textTheme.titleMedium?.copyWith(
+              color: Colors.white,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 16),
+          OutlinedButton.icon(
+            onPressed: () => ref.invalidate(authProvider),
+            icon: const Icon(Icons.refresh_rounded),
+            label: const Text('TRY AGAIN'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: accentColor,
+              side: BorderSide(color: accentColor.withValues(alpha: 0.5)),
+            ),
+          ),
         ],
       ),
     );
@@ -159,8 +323,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
     );
   }
 
-  Widget _buildClassicCyberHeader(TextTheme textTheme, Color primaryColor,
-      Color accentColor, Color secondaryColor) {
+  Widget _buildClassicCyberHeader(TextTheme textTheme, AppUser user,
+      Color primaryColor, Color accentColor, Color secondaryColor) {
+    final displayName = _displayName(user);
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -188,8 +353,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
           filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
           child: Row(
             children: [
-              const NeonBorderAvatar(
-                imageUrl: 'https://picsum.photos/id/64/200/200',
+              NeonBorderAvatar(
+                imageUrl: user.photoUrl,
+                fallbackText: _initials(user),
                 size: 80,
               ),
               const SizedBox(width: 20),
@@ -198,7 +364,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Alex Johnson',
+                      displayName,
                       style: textTheme.headlineSmall?.copyWith(
                         color: Colors.white,
                         fontWeight: FontWeight.w700,
@@ -207,7 +373,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'alex.johnson@email.com',
+                      user.email,
                       style:
                           textTheme.bodyMedium?.copyWith(color: Colors.white70),
                     ),
@@ -222,7 +388,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                             color: accentColor.withValues(alpha: 0.4)),
                       ),
                       child: Text(
-                        'ID: CS-2070-9942',
+                        'ID: ${_shortId(user.id)}',
                         style: textTheme.bodySmall?.copyWith(
                           color: accentColor,
                           fontWeight: FontWeight.bold,
@@ -237,6 +403,31 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
         ),
       ),
     );
+  }
+
+  String _displayName(AppUser user) {
+    final name = user.name?.trim();
+    if (name != null && name.isNotEmpty) return name;
+    final emailPrefix = user.email.split('@').first.trim();
+    return emailPrefix.isEmpty ? 'User' : emailPrefix;
+  }
+
+  String _initials(AppUser user) {
+    final name = user.name?.trim();
+    if (name != null && name.isNotEmpty) {
+      final parts = name.split(RegExp(r'\s+'));
+      if (parts.length >= 2) {
+        return '${parts.first[0]}${parts.last[0]}'.toUpperCase();
+      }
+      return name[0].toUpperCase();
+    }
+    final email = user.email.trim();
+    return email.isEmpty ? 'U' : email[0].toUpperCase();
+  }
+
+  String _shortId(String id) {
+    final clean = id.length <= 8 ? id : id.substring(0, 8);
+    return clean.toUpperCase();
   }
 
   Widget _buildAffiliateStatsRow(Color accentColor) {
@@ -370,10 +561,49 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
     );
   }
 
+  Future<void> _confirmSignOut() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: const Color(0xFF16161D),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: BorderSide(color: Colors.redAccent.withValues(alpha: 0.4)),
+        ),
+        title: const Text(
+          'Terminate session?',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+        ),
+        content: const Text(
+          'You will be signed out of your Click Shop account.',
+          style: TextStyle(color: Colors.white70),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('CANCEL'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text(
+              'SIGN OUT',
+              style: TextStyle(color: Colors.redAccent),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !mounted) return;
+
+    await ref.read(authProvider.notifier).signOut();
+    if (mounted) context.go('/login');
+  }
+
   Widget _buildLogoutButton(TextTheme textTheme, Color accentColor) {
     return Center(
       child: TextButton(
-        onPressed: () {},
+        onPressed: _confirmSignOut,
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 14),
           decoration: BoxDecoration(

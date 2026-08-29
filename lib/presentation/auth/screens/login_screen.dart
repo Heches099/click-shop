@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../config/design_tokens.dart';
+import '../../../core/errors/failures.dart';
 import '../../../core/utils/validators.dart';
 import '../../../core/widgets/animated_press.dart';
 import '../../core/widgets/smart_image.dart';
@@ -335,7 +336,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       ),
                     ),
                     TextButton(
-                      onPressed: () {},
+                      onPressed: () => context.go('/signup'),
                       style: TextButton.styleFrom(
                         foregroundColor: AppColors.secondary,
                       ),
@@ -370,7 +371,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         error: (error, stack) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(error.toString()),
+              content: Text(describeFailure(error)),
               behavior: SnackBarBehavior.floating,
               backgroundColor: AppColors.error,
               shape: RoundedRectangleBorder(

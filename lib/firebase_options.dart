@@ -57,7 +57,6 @@ class DefaultFirebaseOptions {
     projectId: 'click-shop-d62ad',
     storageBucket: 'click-shop-d62ad.firebasestorage.app',
   );
-
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyCtth_Y26QmKO_fw-zbIaui3DujglmUWMI',
     appId: '1:821474654425:ios:1f5b92bc4f941e28fda6c8',
@@ -66,7 +65,6 @@ class DefaultFirebaseOptions {
     storageBucket: 'click-shop-d62ad.firebasestorage.app',
     iosBundleId: 'com.example.clickShop',
   );
-
   static const FirebaseOptions macos = FirebaseOptions(
     apiKey: 'AIzaSyCtth_Y26QmKO_fw-zbIaui3DujglmUWMI',
     appId: '1:821474654425:ios:1f5b92bc4f941e28fda6c8',

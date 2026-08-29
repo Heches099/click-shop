@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:hive_flutter/hive_flutter.dart';
 import '../../core/constants/app_constants.dart';
+import '../../core/services/ref_storage/ref_storage.dart';
 import '../../domain/entities/affiliate.dart';
 import 'affiliate_datasource.dart';
 
@@ -11,7 +11,11 @@ class FirestoreAffiliateDataSource implements AffiliateDataSource {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  static const String _refBox = 'affiliate_ref_box';
+  @override
+  Future<String?> getCurrentRefCode() => RefStorage.instance.getRef();
+
+  @override
+  Future<void> setRefCode(String? code) => RefStorage.instance.setRef(code);
 
   @override
   Future<AffiliateAccount?> getAccount() async {
@@ -95,22 +99,6 @@ class FirestoreAffiliateDataSource implements AffiliateDataSource {
       conversionRate: conversion,
       pendingCommissions: pendingCount,
     );
-  }
-
-  @override
-  Future<String?> getCurrentRefCode() async {
-    final box = await Hive.openBox<String>(_refBox);
-    return box.get('ref');
-  }
-
-  @override
-  Future<void> setRefCode(String? code) async {
-    final box = await Hive.openBox<String>(_refBox);
-    if (code == null) {
-      await box.delete('ref');
-    } else {
-      await box.put('ref', code.trim());
-    }
   }
 
   @override

@@ -1,0 +1,55 @@
+name: Build and Deploy Flutter Web Wasm
+
+on:
+  push:
+    branches:
+      - main # Triggers the build when code is merged into main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Check out the repository code
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      # 2. Set up Java (required for certain Flutter internal build tools)
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      # 3. Install and configure the Flutter environment
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable' # Uses the latest stable channel supporting Wasm by default
+
+      # 4. Clear cache and fetch clean dependencies
+      - name: Install Dependencies
+        run: |
+          flutter clean
+          flutter pub get
+
+      # 5. Compile Flutter Web to Native Wasm/Skwasm
+      - name: Build Web Wasm
+        run: flutter build web --wasm --release
+
+      # 6. Deploy to your hosting provider
+      # Option A: Deploying to GitHub Pages (Uncomment below if using GitHub Pages)
+      # - name: Deploy to GitHub Pages
+      #   uses: Peaceiris/actions-gh-pages@v3
+      #   with:
+      #     github_token: ${{ secrets.GITHUB_TOKEN }}
+      #     publish_dir: ./build/web
+
+      # Option B: Deploying to Firebase Hosting (Uncomment below if using Firebase)
+      - name: Deploy to Firebase Hosting
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: '${{ secrets.GITHUB_TOKEN }}'
+          firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}'
+          channelId: live
+          projectId: YOUR_FIREBASE_PROJECT_ID

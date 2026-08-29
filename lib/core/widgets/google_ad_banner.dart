@@ -68,8 +68,11 @@ class _GoogleAdBannerState extends State<GoogleAdBanner> {
 
     _viewType = registerAdSlot();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      loadAdSense();
-      renderAdSlot(_viewType!, widget.slotId);
+      // loadAdSense() awaits `flutter-first-frame` internally, so third-party
+      // ad code can never block or delay the primary render (LCP/INP safe).
+      loadAdSense().then((_) {
+        renderAdSlot(_viewType!, widget.slotId);
+      });
     });
   }
 
@@ -83,8 +86,14 @@ class _GoogleAdBannerState extends State<GoogleAdBanner> {
   Widget build(BuildContext context) {
     if (!_shouldShow) return const SizedBox.shrink();
 
+    // Fixed explicit dimensions (CLS-safe): the box reserves its space before
+    // the ad script loads, so a slow ad network can never shift the layout.
     return Container(
       width: double.infinity,
+      constraints: BoxConstraints(
+        minHeight: widget.height,
+        maxHeight: widget.height,
+      ),
       height: widget.height,
       margin: const EdgeInsets.symmetric(vertical: 8),
       alignment: Alignment.center,
@@ -100,7 +109,11 @@ class _GoogleAdBannerState extends State<GoogleAdBanner> {
 
   Widget _buildWebView() {
     if (_viewType == null) return const SizedBox.shrink();
-    return HtmlElementView(viewType: _viewType!);
+    return SizedBox(
+      width: double.infinity,
+      height: widget.height,
+      child: HtmlElementView(viewType: _viewType!),
+    );
   }
 
   Widget _buildMobileView() {

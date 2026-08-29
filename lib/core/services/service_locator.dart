@@ -1,13 +1,13 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dio/dio.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get_it/get_it.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 import '../../data/datasource/affiliate_datasource.dart';
 import '../../data/datasource/auth_remote_datasource.dart';
-import '../../data/datasource/local_affiliate_datasource.dart';
 import '../../data/datasource/remote_affiliate_datasource.dart';
-import '../../data/datasource/mock_auth_datasource.dart';
 import '../../data/datasource/product_remote_datasource.dart';
 import '../../data/repositories/affiliate_repository_impl.dart';
 import '../../data/repositories/auth_repository_impl.dart';
@@ -18,7 +18,6 @@ import '../../domain/repositories/product_repository.dart';
 import '../../domain/usecases/affiliate_usecase.dart';
 import '../../domain/usecases/auth_usecase.dart';
 import '../../domain/usecases/product_usecase.dart';
-import '../constants/app_constants.dart';
 import '../network/dio_client.dart';
 import '../network/network_info.dart';
 import 'payments/payment_service.dart';
@@ -39,15 +38,11 @@ Future<void> initServiceLocator() async {
   sl.registerLazySingleton<AnalyticsService>(() => AnalyticsService());
 
   // Payments
-  sl.registerLazySingleton<PaymentService>(
-    () => AppConstants.useRemoteDataSource 
-        ? StripePaymentService() 
-        : MockPaymentService(),
-  );
+  sl.registerLazySingleton<PaymentService>(() => StripePaymentService());
 
-  // Auth (mock – no Firebase for now)
+  // Auth (Firebase)
   sl.registerLazySingleton<AuthRemoteDataSource>(
-    () => MockAuthRemoteDataSource(),
+    () => AuthRemoteDataSourceImpl(FirebaseAuth.instance, GoogleSignIn.instance),
   );
   sl.registerLazySingleton<ProductRemoteDataSource>(
     () => ProductRemoteDataSourceImpl(sl()),
@@ -55,9 +50,7 @@ Future<void> initServiceLocator() async {
 
   // Affiliate program
   sl.registerLazySingleton<AffiliateDataSource>(
-    () => AppConstants.useRemoteDataSource 
-        ? FirestoreAffiliateDataSource() 
-        : HiveAffiliateDataSource(),
+    () => FirestoreAffiliateDataSource(),
   );
   sl.registerLazySingleton<AffiliateRepository>(
     () => AffiliateRepositoryImpl(sl()),

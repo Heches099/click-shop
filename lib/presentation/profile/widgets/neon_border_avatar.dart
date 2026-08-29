@@ -3,12 +3,14 @@ import 'package:flutter/material.dart';
 import '../../core/widgets/smart_image.dart';
 
 class NeonBorderAvatar extends StatefulWidget {
-  final String imageUrl;
+  final String? imageUrl;
+  final String fallbackText;
   final double size;
 
   const NeonBorderAvatar({
     super.key,
-    required this.imageUrl,
+    this.imageUrl,
+    this.fallbackText = 'U',
     this.size = 100,
   });
 
@@ -55,13 +57,48 @@ class _NeonBorderAvatarState extends State<NeonBorderAvatar>
               );
             },
           ),
-          SmartImage(
-            imagePath: widget.imageUrl,
-            width: widget.size,
-            height: widget.size,
-            borderRadius: BorderRadius.all(Radius.circular(widget.size / 2)),
-          ),
+          _hasImage() ? _image() : _fallback(),
         ],
+      ),
+    );
+  }
+
+  bool _hasImage() {
+    final url = widget.imageUrl;
+    return url != null && url.isNotEmpty;
+  }
+
+  Widget _image() {
+    return SmartImage(
+      imagePath: widget.imageUrl!,
+      width: widget.size,
+      height: widget.size,
+      borderRadius: BorderRadius.all(Radius.circular(widget.size / 2)),
+      errorWidget: _fallback(),
+      placeholder: _fallback(),
+    );
+  }
+
+  Widget _fallback() {
+    return Container(
+      width: widget.size,
+      height: widget.size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF1A237E), Color(0xFF00897B)],
+        ),
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        widget.fallbackText.isEmpty ? 'U' : widget.fallbackText,
+        style: TextStyle(
+          color: Colors.white,
+          fontSize: widget.size * 0.38,
+          fontWeight: FontWeight.w800,
+        ),
       ),
     );
   }

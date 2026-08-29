@@ -1,0 +1,28 @@
+# ClickShop robots.txt
+User-agent: *
+Allow: /
+Disallow: /login
+Disallow: /signup
+Disallow: /checkout
+Disallow: /orders
+Disallow: /affiliate
+
+# Google: signal that fully-rendered snapshots are available to the crawler.
+User-agent: Googlebot
+Allow: /
+Disallow: /login
+Disallow: /signup
+Disallow: /checkout
+Disallow: /orders
+Disallow: /affiliate
+
+# Bing
+User-agent: bingbot
+Allow: /
+Disallow: /login
+Disallow: /signup
+Disallow: /checkout
+Disallow: /orders
+Disallow: /affiliate
+
+Sitemap: https://clickshop.example.com/sitemap.xml

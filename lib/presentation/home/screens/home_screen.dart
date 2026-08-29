@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import '../../../config/design_tokens.dart';
 import '../../../core/services/ads/ad_config.dart';
 import '../../../core/utils/responsive.dart';
+import '../../../core/widgets/affiliate_disclosure.dart';
 import '../../../core/widgets/google_ad_banner.dart';
 import '../../../domain/entities/product.dart';
 import '../widgets/banner_slider.dart';
@@ -18,16 +19,9 @@ class HomeScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final products = ref.watch(allProductsProvider);
+    final productsAsync = ref.watch(allProductsProvider);
 
     final selectedCategory = ref.watch(selectedCategoryProvider);
-
-    final filteredProducts = selectedCategory.toLowerCase() == 'all'
-        ? products
-        : products
-            .where((p) =>
-                p.category.toLowerCase() == selectedCategory.toLowerCase())
-            .toList();
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -55,10 +49,11 @@ class HomeScreen extends ConsumerWidget {
               child: GoogleAdBanner(slotId: AdConfig.homeTopSlot),
             ),
           ),
+          const SliverToBoxAdapter(child: AffiliateDisclosure()),
           _buildCategoryHeader('Shop by Category'),
           _buildCategoryList(ref),
           _buildCategoryHeader('Featured Products'),
-          _buildProductGrid(context, filteredProducts),
+          _buildProductGrid(context, ref, productsAsync, selectedCategory),
           const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.xxl)),
         ],
       ),
@@ -185,8 +180,7 @@ class HomeScreen extends ConsumerWidget {
                   selectedCategory.toLowerCase() == category.id.toLowerCase();
 
               return GestureDetector(
-                onTap: () => ref.read(selectedCategoryProvider.notifier).state =
-                    category.id,
+                onTap: () => context.push('/category/${category.id}'),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 8.0),
                   child: Column(
@@ -234,19 +228,66 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildProductGrid(BuildContext context, List<Product> products) {
-    return SliverPadding(
-      padding: EdgeInsets.all(AppResponsive.scale(context, 20)),
-      sliver: SliverGrid(
-        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: AppResponsive.gridColumns(context, minItemWidth: 150),
-          mainAxisSpacing: AppResponsive.scale(context, 20),
-          crossAxisSpacing: AppResponsive.scale(context, 20),
-          childAspectRatio: AppResponsive.productCardRatio(context),
+  Widget _buildProductGrid(BuildContext context, WidgetRef ref,
+      AsyncValue<List<Product>> productsAsync, String selectedCategory) {
+    return productsAsync.when(
+      data: (products) {
+        final filtered = selectedCategory.toLowerCase() == 'all'
+            ? products
+            : products
+                .where((p) =>
+                    p.category.toLowerCase() == selectedCategory.toLowerCase())
+                .toList();
+        return SliverPadding(
+          padding: EdgeInsets.all(AppResponsive.scale(context, 20)),
+          sliver: SliverGrid(
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount:
+                  AppResponsive.gridColumns(context, minItemWidth: 150),
+              mainAxisSpacing: AppResponsive.scale(context, 20),
+              crossAxisSpacing: AppResponsive.scale(context, 20),
+              childAspectRatio: AppResponsive.productCardRatio(context),
+            ),
+            delegate: SliverChildBuilderDelegate(
+              (context, index) => PremiumProductCard(product: filtered[index]),
+              childCount: filtered.length,
+            ),
+          ),
+        );
+      },
+      loading: () => const SliverToBoxAdapter(
+        child: Padding(
+          padding: EdgeInsets.symmetric(vertical: 60),
+          child: Center(child: CircularProgressIndicator()),
         ),
-        delegate: SliverChildBuilderDelegate(
-          (context, index) => PremiumProductCard(product: products[index]),
-          childCount: products.length,
+      ),
+      error: (error, _) => SliverToBoxAdapter(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Center(
+            child: Column(
+              children: [
+                const Icon(Icons.cloud_off_rounded,
+                    size: 48, color: AppColors.border),
+                const SizedBox(height: 12),
+                const Text('Unable to load products',
+                    style: AppTypography.titleLarge),
+                const SizedBox(height: 8),
+                Text(
+                  '$error',
+                  textAlign: TextAlign.center,
+                  style: AppTypography.bodyMedium
+                      .copyWith(color: AppColors.textSecondary),
+                ),
+                const SizedBox(height: 16),
+                OutlinedButton.icon(
+                  onPressed: () => ref.invalidate(allProductsProvider),
+                  icon: const Icon(Icons.refresh_rounded),
+                  label: const Text('Retry'),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );

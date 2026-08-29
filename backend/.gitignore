@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Env / secrets
+.env
+
+# Local DBs (dev/test)
+*.db
+*.sqlite3
+
+# Build artifacts
+build/

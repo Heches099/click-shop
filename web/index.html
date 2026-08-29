@@ -1,25 +1,40 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <!--
-    If you are serving your web app in a path other than the root, change the
-    href value below to reflect the base path you are serving from.
-
-    The path provided below has to start and end with a slash "/" in order for
-    it to work correctly.
-
-    For more details:
-    * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
-
-    This is a placeholder for base href that will be replaced by the value of
-    the `--base-href` argument provided to `flutter build`.
+    ClickShop — SEO & performance hardened entry point.
+    - Declarative (hash-free) URLs are handled by go_router + the hosting
+      rewrite rules (see firebase.json) so every deep link serves index.html.
+    - The Wasm/Skwasm engine is pinned in web/flutter_bootstrap.js.
+    - Crawlers that skip JS get the <noscript> snapshot below; the Cloudflare
+      Worker (worker/crawler_proxy.js) serves pre-rendered HTML snapshots.
   -->
   <base href="$FLUTTER_BASE_HREF">
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="ClickShop — premium fashion, sneakers and electronics at the best prices.">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+  <!-- Primary SEO -->
+  <title>ClickShop — Premium Fashion, Sneakers & Electronics</title>
+  <meta name="description" content="ClickShop is your premium online store for fashion, sneakers and electronics at the best prices. Fast delivery, genuine products and real customer reviews.">
+  <meta name="keywords" content="online shopping, sneakers, fashion, electronics, best prices, ClickShop">
+  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
+  <meta name="author" content="ClickShop">
+  <link rel="canonical" href="https://clickshop.example.com/">
+  <link rel="sitemap" type="application/xml" href="/sitemap.xml">
+
+  <!-- Open Graph / social -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="ClickShop">
+  <meta property="og:title" content="ClickShop — Premium Fashion, Sneakers & Electronics">
+  <meta property="og:description" content="Premium fashion, sneakers and electronics at the best prices. Fast delivery, genuine products, real reviews.">
+  <meta property="og:url" content="https://clickshop.example.com/">
+  <meta property="og:image" content="https://clickshop.example.com/icons/Icon-512.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="ClickShop — Premium Fashion, Sneakers & Electronics">
+  <meta name="twitter:description" content="Premium fashion, sneakers and electronics at the best prices.">
+  <meta name="twitter:image" content="https://clickshop.example.com/icons/Icon-512.png">
 
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
@@ -29,30 +44,74 @@
 
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png"/>
-
-  <title>ClickShop</title>
   <link rel="manifest" href="manifest.json">
 
-  <!--
-    Google AdSense (web).
-    The app injects the AdSense loader dynamically at runtime. Uncomment the
-    snippet below and replace CLIENT_ID once you have been approved by
-    Google AdSense and are serving this site on a live domain.
-    Also update lib/core/services/ads/ad_config.dart with your publisher id
-    and ad unit slot ids, and set enabled: true.
-
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=CLIENT_ID"
-            crossorigin="anonymous"></script>
-  -->
+  <!-- Static Organization + WebSite structured data (present even before the
+       Wasm engine boots, so crawlers always see valid schema). -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebSite",
+        "@id": "https://clickshop.example.com/#website",
+        "url": "https://clickshop.example.com/",
+        "name": "ClickShop",
+        "description": "Premium fashion, sneakers and electronics at the best prices.",
+        "inLanguage": "en-US"
+      },
+      {
+        "@type": "Organization",
+        "@id": "https://clickshop.example.com/#organization",
+        "url": "https://clickshop.example.com/",
+        "name": "ClickShop",
+        "logo": "https://clickshop.example.com/icons/Icon-512.png"
+      }
+    ]
+  }
+  </script>
 </head>
 <body>
-  <!--
-    You can customize the "flutter_bootstrap.js" script.
-    This is useful to provide a custom configuration to the Flutter loader
-    or to give the user feedback during the initialization process.
+  <!-- Loading indicator shown until the engine paints its first frame. -->
+  <div id="flt-loading" style="position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#fff;z-index:9999;font-family:-apple-system,Segoe UI,Roboto,sans-serif;">
+    <img src="icons/Icon-192.png" width="64" height="64" alt="ClickShop" style="border-radius:16px;">
+    <p style="margin-top:16px;color:#555;font-size:14px;">Loading ClickShop…</p>
+  </div>
 
-    For more details:
-    * https://docs.flutter.dev/platform-integration/web/initialization
+  <script>
+    // Remove the loading overlay once the engine reports a first frame.
+    window.addEventListener('flutter-first-frame', () => {
+      var el = document.getElementById('flt-loading');
+      if (el) { el.style.transition = 'opacity .25s'; el.style.opacity = '0'; setTimeout(function(){ el.remove(); }, 300); }
+    });
+    // Safety fallback so the overlay can never block a page.
+    window.addEventListener('load', function () {
+      setTimeout(function () {
+        var el = document.getElementById('flt-loading');
+        if (el) { el.remove(); }
+      }, 15000);
+    });
+  </script>
+
+  <noscript>
+    <div style="max-width:720px;margin:48px auto;padding:0 24px;font-family:-apple-system,Segoe UI,Roboto,sans-serif;color:#222;">
+      <h1>ClickShop — Premium Fashion, Sneakers &amp; Electronics</h1>
+      <p>ClickShop offers premium fashion, sneakers and electronics at the best prices with fast, reliable delivery. Browse the full catalog with JavaScript enabled, or contact our team any time.</p>
+      <h2>Popular categories</h2>
+      <ul>
+        <li><a href="/category/sneakers">Sneakers</a></li>
+        <li><a href="/category/fashion">Fashion</a></li>
+        <li><a href="/category/electronics">Electronics</a></li>
+        <li><a href="/category/all">All products</a></li>
+      </ul>
+      <p><small>As an affiliate, ClickShop may earn a commission from partner links. Ad placements are clearly marked and reserved in fixed-size boxes.</small></p>
+    </div>
+  </noscript>
+
+  <!--
+    Custom bootstrap (web/flutter_bootstrap.js) pins the renderer to "skwasm"
+    and skips engine startup entirely for known crawlers, so bots that bypass
+    the edge proxy still receive instant static content.
   -->
   <script src="flutter_bootstrap.js" async></script>
 </body>

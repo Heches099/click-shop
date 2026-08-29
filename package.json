@@ -1,0 +1,9 @@
+{
+  "name": "click-shop",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "prerender": "node tools/prerender.mjs"
+  }
+}

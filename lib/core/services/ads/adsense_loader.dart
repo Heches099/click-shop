@@ -12,7 +12,11 @@ bool get adsenseAvailable => impl.adsenseAvailable;
 String registerAdSlot() => impl.registerAdSlot();
 
 /// Injects the AdSense script once. Safe to call repeatedly.
-void loadAdSense() => impl.loadAdSense();
+///
+/// The script is only injected after the app's first visual frame
+/// (`flutter-first-frame`), so advertising code never delays or shifts the
+/// initial render. Returns a future that completes once injection happened.
+Future<void> loadAdSense() => impl.loadAdSense();
 
 /// Renders an ad unit into the DOM element registered under [viewType].
 void renderAdSlot(String viewType, String slotId) =>

@@ -1,13 +1,16 @@
 {
-    "name": "click_shop",
-    "short_name": "click_shop",
-    "start_url": ".",
+    "name": "ClickShop — Premium Fashion, Sneakers & Electronics",
+    "short_name": "ClickShop",
+    "start_url": "/",
+    "scope": "/",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#ffffff",
+    "theme_color": "#03704a",
+    "description": "ClickShop is your premium online store for fashion, sneakers and electronics at the best prices with fast delivery and real reviews.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
+    "categories": ["shopping", "fashion", "lifestyle"],
+    "lang": "en-US",
     "icons": [
         {
             "src": "icons/Icon-192.png",

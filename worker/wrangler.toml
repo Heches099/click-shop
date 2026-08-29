@@ -1,0 +1,13 @@
+name = "click-shop-crawler-proxy"
+main = "crawler_proxy.js"
+compatibility_date = "2026-01-01"
+
+# The real Flutter Wasm/Skwasm app.
+# [vars]
+# ORIGIN = "https://click-shop-d62ad.web.app"
+# PRERENDER_BASE_URL = "https://click-shop-prerender.web.app"
+
+# Route the apex domain through the worker once deployed:
+#   [routes]
+#   pattern = "clickshop.example.com/*"
+#   zone_name = "example.com"

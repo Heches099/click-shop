@@ -1,8 +1,14 @@
+import 'dart:async';
+
 import 'dart:ui_web' as ui_web;
 import 'package:web/web.dart' as web;
 import 'ad_config.dart';
+import '../seo/seo_service.dart';
 
 /// Web implementation of the AdSense loader.
+///
+/// Uses `package:web` (dart:js_interop) only — never `dart:html` — so it
+/// compiles for both JavaScript and Wasm/Skwasm targets.
 const bool adsenseAvailable = true;
 
 bool _scriptLoaded = false;
@@ -19,10 +25,18 @@ String registerAdSlot() {
   return viewType;
 }
 
-/// Injects the AdSense bootstrap script once per session.
-void loadAdSense() {
+/// Injects the AdSense bootstrap script once per session, but only AFTER the
+/// app has painted its first frame (`flutter-first-frame`). This keeps ad
+/// initialization off the critical rendering path (protects LCP/INP/CLS).
+Future<void> loadAdSense() async {
   if (_scriptLoaded || !AdConfig.isConfigured) return;
+
+  // Wait for the first visual frame before pulling any ad code.
+  await SeoService.instance.firstFrame;
+
+  if (_scriptLoaded) return;
   _scriptLoaded = true;
+
   final script = web.document.createElement('script') as web.HTMLScriptElement;
   script.src =
       'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js'
@@ -34,6 +48,9 @@ void loadAdSense() {
 
 /// Renders an AdSense `<ins>` unit inside the DOM element whose id matches
 /// [viewType], then triggers AdSense to fill it.
+///
+/// The unit is given a fixed, explicit size (CLS-safe) so AdSense can never
+/// push the surrounding layout down and trigger layout-shift penalties.
 void renderAdSlot(String viewType, String slotId) {
   if (!AdConfig.isConfigured) return;
   final container = web.document.getElementById(viewType);
@@ -42,10 +59,11 @@ void renderAdSlot(String viewType, String slotId) {
   final ins = web.document.createElement('ins') as web.HTMLElement;
   ins.className = 'adsbygoogle';
   ins.style.display = 'block';
+  ins.style.width = '100%';
   ins.setAttribute('data-ad-client', AdConfig.publisherClientId);
   ins.setAttribute('data-ad-slot', slotId);
   ins.setAttribute('data-ad-format', 'auto');
-  ins.setAttribute('data-full-width-responsive', 'true');
+  ins.setAttribute('data-full-width-responsive', 'false');
   container.append(ins);
 
   // Standard AdSense trigger: `(adsbygoogle = window.adsbygoogle || []).push({})`

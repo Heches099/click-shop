@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../config/design_tokens.dart';
+import '../../../core/errors/failures.dart';
 import '../../../core/utils/validators.dart';
 import '../../../core/widgets/animated_press.dart';
 import '../../core/widgets/smart_image.dart';
@@ -98,6 +99,19 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
           if (user != null && context.mounted) {
             context.go('/');
           }
+        },
+        error: (error, stack) {
+          if (!context.mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(describeFailure(error)),
+              behavior: SnackBarBehavior.floating,
+              backgroundColor: AppColors.error,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+          );
         },
       );
     });

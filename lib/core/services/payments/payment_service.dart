@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:dio/dio.dart';
+import '../../constants/app_constants.dart';
 
 abstract class PaymentService {
   Future<bool> processPayment({
@@ -11,16 +12,9 @@ abstract class PaymentService {
 
 class StripePaymentService implements PaymentService {
   final Dio _dio = Dio();
-  
-  // Replace with your real Stripe Secret Key (Server-side)
-  // NEVER keep this in the client app in a real production environment.
-  // Use a Firebase Cloud Function to create PaymentIntents.
-  static const String _secretKey = 'sk_test_...';
-  
-  static const String _publishableKey = 'pk_test_...';
 
   StripePaymentService() {
-    Stripe.publishableKey = _publishableKey;
+    Stripe.publishableKey = AppConstants.stripePublishableKey;
   }
 
   @override
@@ -29,7 +23,9 @@ class StripePaymentService implements PaymentService {
     required String currency,
   }) async {
     try {
-      // 1. Create PaymentIntent (This should ideally happen on your backend)
+      // In production, create the PaymentIntent on your backend
+      // (e.g. a Firebase Cloud Function) so the secret key never ships
+      // in the client app.
       final response = await _dio.post(
         'https://api.stripe.com/v1/payment_intents',
         data: {
@@ -39,7 +35,7 @@ class StripePaymentService implements PaymentService {
         },
         options: Options(
           headers: {
-            'Authorization': 'Bearer $_secretKey',
+            'Authorization': 'Bearer ${AppConstants.stripeSecretKey}',
             'Content-Type': 'application/x-www-form-urlencoded',
           },
         ),
@@ -64,17 +60,5 @@ class StripePaymentService implements PaymentService {
       debugPrint('Stripe Error: $e');
       return false;
     }
-  }
-}
-
-/// A mock payment service for testing.
-class MockPaymentService implements PaymentService {
-  @override
-  Future<bool> processPayment({
-    required double amount,
-    required String currency,
-  }) async {
-    await Future.delayed(const Duration(seconds: 2));
-    return true;
   }
 }

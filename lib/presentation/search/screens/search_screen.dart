@@ -31,8 +31,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
 
   bool get _showResults => _query.trim().isNotEmpty || _filters.isActive;
 
-  List<Product> get _results {
-    final all = ref.watch(allProductsProvider);
+  List<Product> _filterResults(List<Product> all) {
     final q = _query.trim().toLowerCase();
     final list = all.where((p) {
       final matchesQuery = q.isEmpty ||
@@ -57,8 +56,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     return list;
   }
 
-  List<String> get _brands {
-    final all = ref.watch(allProductsProvider);
+  List<String> _brandsOf(List<Product> all) {
     final set = all
         .map((p) => p.brand.trim())
         .where((b) => b.isNotEmpty)
@@ -68,8 +66,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     return set;
   }
 
-  List<MapEntry<String, int>> get _popularCategories {
-    final all = ref.watch(allProductsProvider);
+  List<MapEntry<String, int>> _popularCategoriesOf(List<Product> all) {
     final counts = <String, int>{};
     for (final p in all) {
       final c = p.category.trim();
@@ -99,13 +96,14 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   }
 
   Future<void> _openFilters() async {
+    final all = ref.read(allProductsProvider).value ?? const <Product>[];
     final result = await showModalBottomSheet<ProductFilters>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => FilterBottomSheet(
         initialFilters: _filters,
-        brands: _brands,
+        brands: _brandsOf(all),
       ),
     );
     if (result != null) {
@@ -123,7 +121,9 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final results = _results;
+    final productsAsync = ref.watch(allProductsProvider);
+    final all = productsAsync.value ?? const <Product>[];
+    final results = _filterResults(all);
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -135,12 +135,43 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               child: _buildSearchBar(),
             ),
             Expanded(
-              child: _showResults
-                  ? _buildResults(results)
-                  : _buildIdleContent(),
+              child: productsAsync.isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : productsAsync.hasError && all.isEmpty
+                      ? _buildLoadError()
+                      : _showResults
+                          ? _buildResults(results)
+                          : _buildIdleContent(all),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildLoadError() {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.cloud_off_rounded,
+              size: 48, color: AppColors.border),
+          const SizedBox(height: 12),
+          const Text('Unable to load products',
+              style: AppTypography.titleLarge),
+          const SizedBox(height: 8),
+          Text(
+            'Check your connection and try again.',
+            style: AppTypography.bodyMedium
+                .copyWith(color: AppColors.textSecondary),
+          ),
+          const SizedBox(height: 16),
+          OutlinedButton.icon(
+            onPressed: () => ref.invalidate(allProductsProvider),
+            icon: const Icon(Icons.refresh_rounded),
+            label: const Text('Retry'),
+          ),
+        ],
       ),
     );
   }
@@ -218,7 +249,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     );
   }
 
-  Widget _buildIdleContent() {
+  Widget _buildIdleContent(List<Product> all) {
     return ListView(
       physics: const BouncingScrollPhysics(),
       padding: const EdgeInsets.all(20),
@@ -240,7 +271,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         const SizedBox(height: 12),
         FadeInUp(
           delay: const Duration(milliseconds: 500),
-          child: _buildCategoryGrid(),
+          child: _buildCategoryGrid(all),
         ),
       ],
     );
@@ -287,8 +318,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     );
   }
 
-  Widget _buildCategoryGrid() {
-    final categories = _popularCategories;
+  Widget _buildCategoryGrid(List<Product> all) {
+    final categories = _popularCategoriesOf(all);
     final columns = AppResponsive.gridColumns(context, minItemWidth: 170)
         .clamp(2, 3)
         .toInt();
@@ -339,9 +370,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
       return Icons.directions_run_rounded;
     }
     if (c.contains('watch')) return Icons.watch_rounded;
-    if (c.contains('cloth') ||
-        c.contains('shirt') ||
-        c.contains('apparel')) {
+    if (c.contains('cloth') || c.contains('shirt') || c.contains('apparel')) {
       return Icons.checkroom_rounded;
     }
     if (c.contains('electronic')) return Icons.devices_rounded;
@@ -437,7 +466,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
       padding: const EdgeInsets.only(top: 80),
       child: Column(
         children: [
-          const Icon(Icons.search_off_rounded, size: 64, color: AppColors.border),
+          const Icon(Icons.search_off_rounded,
+              size: 64, color: AppColors.border),
           const SizedBox(height: 16),
           const Text('No products found', style: AppTypography.titleLarge),
           const SizedBox(height: 8),

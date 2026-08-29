@@ -6,14 +6,27 @@ import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../config/design_tokens.dart';
 import '../../../core/services/ads/ad_config.dart';
+import '../../../core/services/seo/seo_service.dart';
 import '../../../core/utils/responsive.dart';
+import '../../../core/widgets/affiliate_disclosure.dart';
 import '../../../core/widgets/google_ad_banner.dart';
 import '../../../domain/entities/product.dart';
 import '../../cart/providers/cart_provider.dart';
+import '../../home/providers/home_provider.dart';
 
 class ProductDetailScreen extends ConsumerStatefulWidget {
   final Product product;
-  const ProductDetailScreen({super.key, required this.product});
+
+  /// When true the screen fetches the full product by id from the repository.
+  /// Used on deep links / hard refreshes of `/products/:id`, where no
+  /// in-memory [Product] is passed via `state.extra`.
+  final bool hydrated;
+
+  const ProductDetailScreen({
+    super.key,
+    required this.product,
+    this.hydrated = false,
+  });
 
   @override
   ConsumerState<ProductDetailScreen> createState() =>
@@ -25,9 +38,104 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
   String? _selectedSize;
   String? _selectedColor;
 
+  Product? _loadedProduct;
+  bool _loading = false;
+  String? _loadError;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.hydrated) {
+      _hydrateProduct();
+    } else {
+      _syncSeo(widget.product);
+    }
+  }
+
+  Future<void> _hydrateProduct() async {
+    setState(() => _loading = true);
+    try {
+      final product = await ref
+          .read(productUseCaseProvider)
+          .getProductById(widget.product.id);
+      if (!mounted) return;
+      setState(() {
+        _loadedProduct = product;
+        _loading = false;
+      });
+      _syncSeo(product);
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _loadError = '$error';
+        _loading = false;
+      });
+    }
+  }
+
+  /// E-E-A-T / structured data: every product page injects a JSON-LD
+  /// Product schema and per-page title/description into `<head>`.
+  void _syncSeo(Product product) {
+    final canonicalPath = '/products/${product.id}';
+    SeoService.instance.setPageMeta(
+      title: '${product.name} — ${product.brand} | ClickShop',
+      description:
+          'Buy ${product.name} for \$${product.price}. '
+          '${product.description.length > 140 ? product.description.substring(0, 140) : product.description}',
+      canonicalPath: canonicalPath,
+    );
+    SeoService.instance.injectProductSchema(product, canonicalPath: canonicalPath);
+  }
+
   @override
   Widget build(BuildContext context) {
-    final product = widget.product;
+    final product = _loadedProduct ?? widget.product;
+
+    if (_loading) {
+      return const Scaffold(
+        backgroundColor: AppColors.background,
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+    if (_loadError != null) {
+      return Scaffold(
+        backgroundColor: AppColors.background,
+        appBar: AppBar(
+          backgroundColor: AppColors.background,
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_ios_new_rounded),
+            onPressed: () => Navigator.pop(context),
+          ),
+        ),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(32),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.cloud_off_rounded,
+                    size: 48, color: AppColors.border),
+                const SizedBox(height: 12),
+                const Text('Product not found',
+                    style: AppTypography.titleLarge),
+                const SizedBox(height: 8),
+                Text('$_loadError',
+                    textAlign: TextAlign.center,
+                    style: AppTypography.bodyMedium
+                        .copyWith(color: AppColors.textSecondary)),
+                const SizedBox(height: 16),
+                OutlinedButton.icon(
+                  onPressed: _hydrateProduct,
+                  icon: const Icon(Icons.refresh_rounded),
+                  label: const Text('Retry'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -46,6 +154,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                   child: GoogleAdBanner(slotId: AdConfig.productSlot),
                 ),
               ),
+              const SliverToBoxAdapter(child: AffiliateDisclosure()),
               const SliverToBoxAdapter(child: SizedBox(height: 120)),
             ],
           ),
