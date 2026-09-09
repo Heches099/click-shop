@@ -7,11 +7,21 @@ from app.core.config import settings
 
 
 def _clean_database_url(url: str) -> str:
-    """Remove query params that asyncpg/SQLAlchemy cannot pass directly."""
+    """Normalise the DATABASE_URL so asyncpg is always used."""
     if not url.startswith("postgres"):
         return url
+
     parts = urlsplit(url)
-    return urlunsplit((parts.scheme, parts.netloc, parts.path, "", parts.fragment))
+
+    # Ensure the scheme uses the asyncpg driver
+    scheme = parts.scheme
+    if scheme == "postgresql":
+        scheme = "postgresql+asyncpg"
+    elif scheme == "postgresql+psycopg2":
+        scheme = "postgresql+asyncpg"
+
+    # Strip query params that asyncpg/SQLAlchemy cannot pass directly
+    return urlunsplit((scheme, parts.netloc, parts.path, "", parts.fragment))
 
 
 _engine_kwargs = {"echo": False, "pool_pre_ping": True}
