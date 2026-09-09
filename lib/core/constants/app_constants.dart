@@ -1,6 +1,6 @@
 class AppConstants {
   static const String appName = 'ClickShop';
-  static const String baseUrl = 'https://api.example.com/v1';
+  static const String baseUrl = 'https://clickshop-api.onrender.com/v1';
   static const String tokenKey = 'auth_token';
   static const String userBox = 'userBox';
   static const String cartBox = 'cartBox';
@@ -19,7 +19,7 @@ class AppConstants {
 
   /// Public store URL used to build affiliate referral links.
   /// Replace with your deployed web/domain URL before going live.
-  static const String storeBaseUrl = 'https://clickshop.example.com';
+  static const String storeBaseUrl = 'https://click-shop-d62ad.web.app';
 
   /// Default affiliate commission rate (10% of each referred order).
   static const double affiliateCommissionRate = 0.10;

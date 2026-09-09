@@ -6,7 +6,9 @@ import 'package:share_plus/share_plus.dart';
 import '../../../config/design_tokens.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../domain/entities/affiliate.dart';
+import '../../../domain/entities/product.dart';
 import '../../core/widgets/premium_button.dart';
+import '../../home/providers/home_provider.dart';
 import '../providers/affiliate_provider.dart';
 
 class AffiliatePortalScreen extends ConsumerStatefulWidget {
@@ -321,6 +323,19 @@ class _AffiliatePortalScreenState extends ConsumerState<AffiliatePortalScreen> {
                   ],
                 ),
         ),
+        const SizedBox(height: 24),
+        const FadeInUp(
+          child: Text('Products to promote', style: AppTypography.h2),
+        ),
+        const SizedBox(height: 4),
+        const FadeInUp(
+          child: Text(
+            'Share these products and earn commission on every sale',
+            style: AppTypography.bodyMedium,
+          ),
+        ),
+        const SizedBox(height: 12),
+        _buildProductsToPromote(account),
         const SizedBox(height: 40),
       ],
     );
@@ -671,6 +686,150 @@ class _AffiliatePortalScreenState extends ConsumerState<AffiliatePortalScreen> {
         ],
       ),
     );
+  }
+
+  Widget _buildProductsToPromote(AffiliateAccount account) {
+    final productsAsync = ref.watch(featuredProductsProvider);
+    return productsAsync.when(
+      loading: () => const Padding(
+        padding: EdgeInsets.all(24),
+        child: Center(child: CircularProgressIndicator()),
+      ),
+      error: (e, _) => Center(child: Text('Error loading products: $e')),
+      data: (products) {
+        if (products.isEmpty) {
+          return const SizedBox.shrink();
+        }
+        return SizedBox(
+          height: 220,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: products.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 12),
+            itemBuilder: (context, index) {
+              final product = products[index];
+              return _buildAffiliateProductCard(product, account.promoCode);
+            },
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildAffiliateProductCard(Product product, String promoCode) {
+    return Container(
+      width: 160,
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: AppShadows.soft,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: ClipRRect(
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(18)),
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  Image.network(
+                    product.firstImage,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Container(
+                      color: AppColors.background,
+                      child: const Icon(Icons.image_outlined,
+                          color: AppColors.textHint),
+                    ),
+                  ),
+                  if (product.hasDiscount)
+                    Positioned(
+                      top: 8,
+                      left: 8,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 6, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: AppColors.secondary,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          '-${product.discountPercentage.toInt()}%',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(10),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  product.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTypography.bodyMedium
+                      .copyWith(fontSize: 13, fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  '\$${product.price.toStringAsFixed(2)}',
+                  style: AppTypography.bodyMedium.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.primary,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                GestureDetector(
+                  onTap: () => _shareProductLink(product, promoCode),
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.share_rounded, color: Colors.white, size: 14),
+                        SizedBox(width: 4),
+                        Text(
+                          'Share',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _shareProductLink(Product product, String promoCode) async {
+    final baseLink =
+        await ref.read(affiliateUseCaseProvider).buildReferralLink(promoCode);
+    final productLink =
+        '$baseLink/product/${product.id}?ref=$promoCode';
+    await SharePlus.instance.share(
+        ShareParams(text: 'Check out ${product.name} — $productLink'));
   }
 
   // ---------------------------------------------------------------------------

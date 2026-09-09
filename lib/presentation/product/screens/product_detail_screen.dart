@@ -359,8 +359,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
         scrollDirection: Axis.horizontal,
         itemCount: colors.length,
         itemBuilder: (context, index) {
-          final color =
-              Color(int.parse(colors[index].replaceFirst('#', '0xFF')));
+          final color = _parseColor(colors[index]);
           final isSelected = _selectedColor == colors[index];
           return GestureDetector(
             onTap: () => setState(() => _selectedColor = colors[index]),
@@ -383,6 +382,31 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
         },
       ),
     );
+  }
+
+  Color _parseColor(String value) {
+    final map = {
+      'black': const Color(0xFF000000),
+      'white': const Color(0xFFFFFFFF),
+      'red': const Color(0xFFF44336),
+      'blue': const Color(0xFF2196F3),
+      'green': const Color(0xFF4CAF50),
+      'yellow': const Color(0xFFFFEB3B),
+      'grey': const Color(0xFF9E9E9E),
+      'gray': const Color(0xFF9E9E9E),
+      'pink': const Color(0xFFF48FB1),
+      'orange': const Color(0xFFFF9800),
+      'purple': const Color(0xFF9C27B0),
+      'brown': const Color(0xFF795548),
+      'navy': const Color(0xFF0D47A1),
+      'beige': const Color(0xFFF5F5DC),
+    };
+    final trimmed = value.trim();
+    if (trimmed.startsWith('#')) {
+      final hex = trimmed.replaceFirst('#', '0xFF');
+      return Color(int.parse(hex));
+    }
+    return map[trimmed.toLowerCase()] ?? const Color(0xFF9E9E9E);
   }
 
   Widget _buildSizeList(List<String> sizes) {
