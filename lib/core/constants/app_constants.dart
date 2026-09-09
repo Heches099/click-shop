@@ -1,6 +1,6 @@
 class AppConstants {
   static const String appName = 'ClickShop';
-  static const String baseUrl = 'https://clickshop-api.onrender.com/v1';
+  static const String baseUrl = 'https://click-shop-669d.onrender.com/v1';
   static const String tokenKey = 'auth_token';
   static const String userBox = 'userBox';
   static const String cartBox = 'cartBox';
