@@ -4,6 +4,7 @@ import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:web/web.dart' as web;
 import '../../../config/design_tokens.dart';
 import '../../../core/services/ads/ad_config.dart';
 import '../../../core/services/seo/seo_service.dart';
@@ -476,6 +477,9 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
   }
 
   Widget _buildBottomAction(Product product) {
+    final isAmazonProduct =
+        product.amazonUrl != null && product.amazonUrl!.isNotEmpty;
+
     return Positioned(
       bottom: 0,
       left: 0,
@@ -508,25 +512,68 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
               ),
               const SizedBox(width: 24),
               Expanded(
-                child: PremiumPressableButton(
-                  onPressed: () {
-                    ref.read(cartProvider.notifier).addItem(
-                          product,
-                          color: _selectedColor,
-                          size: _selectedSize,
-                        );
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Added to bag'),
-                        behavior: SnackBarBehavior.floating,
+                child: isAmazonProduct
+                    ? _buildAmazonBuyButton(product)
+                    : PremiumPressableButton(
+                        onPressed: () {
+                          ref.read(cartProvider.notifier).addItem(
+                                product,
+                                color: _selectedColor,
+                                size: _selectedSize,
+                              );
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Added to bag'),
+                              behavior: SnackBarBehavior.floating,
+                            ),
+                          );
+                        },
+                        text: 'Add to Bag',
                       ),
-                    );
-                  },
-                  text: 'Add to Bag',
-                ),
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  /// AMAZON ASSOCIATES: "Buy on Amazon" button that opens the product's
+  /// Amazon affiliate URL with tracking ID: clickshop03b-20
+  Widget _buildAmazonBuyButton(Product product) {
+    return GestureDetector(
+      onTap: () {
+        web.window.open(product.amazonUrl!, '_blank');
+      },
+      child: Container(
+        width: double.infinity,
+        height: 56,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: const Color(0xFFFF9900),
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFFFF9900).withValues(alpha: 0.3),
+              blurRadius: 15,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: const Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.shopping_cart_outlined, color: Colors.white, size: 20),
+            SizedBox(width: 10),
+            Text(
+              'Buy on Amazon',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 17,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
         ),
       ),
     );

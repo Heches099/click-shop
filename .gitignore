@@ -43,3 +43,12 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Secrets / environment files — never commit real credentials
+**/.env
+**/.env.*
+!**/.env.example
+!**/*.env.example
+
+# Firebase CLI local cache
+.firebase/

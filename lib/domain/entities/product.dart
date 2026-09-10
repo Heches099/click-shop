@@ -14,6 +14,12 @@ class Product {
   final List<String> colors;
   final List<String> sizes;
 
+  // AMAZON ASSOCIATES: Optional fields for Amazon product integration.
+  // When set, the product detail screen shows a "Buy on Amazon" button
+  // that opens the affiliate URL with tracking ID: clickshop03b-20.
+  final String? asin;
+  final String? amazonUrl;
+
   const Product({
     required this.id,
     required this.name,
@@ -29,6 +35,8 @@ class Product {
     this.specifications = const {},
     this.colors = const [],
     this.sizes = const [],
+    this.asin,
+    this.amazonUrl,
   });
 
   String get firstImage => images.isNotEmpty ? images.first : '';

@@ -18,8 +18,10 @@ int _slotCounter = 0;
 /// returns the view type the widget should render.
 String registerAdSlot() {
   final viewType = 'ad_slot_${_slotCounter++}';
-  final element = web.document.createElement('div');
+  final element = web.document.createElement('div') as web.HTMLDivElement;
   element.id = viewType;
+  element.style.width = '100%';
+  element.style.height = '100%';
   ui_web.platformViewRegistry
       .registerViewFactory(viewType, (int viewId) => element);
   return viewType;

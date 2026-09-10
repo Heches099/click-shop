@@ -26,6 +26,21 @@ class Settings(BaseSettings):
     store_base_url: str = "https://clickshop.example.com"
     affiliate_commission_rate: float = 0.10
 
+    # --- Amazon Associates ---
+    # Affiliate-link mode is the default and requires NO credentials.
+    # Keep amazon_api_enabled=false until the Associates account is
+    # eligible for the Amazon Creators API / PA-API.
+    amazon_api_enabled: bool = False
+
+    # Public affiliate tracking ID (not a secret — appears in affiliate URLs).
+    amazon_partner_tag: str = "clickshop03b-20"
+    amazon_marketplace: str = "www.amazon.com"
+    amazon_region: str = "us-east-1"
+
+    # Future Amazon API credentials (backend-only, never returned to clients).
+    amazon_access_key: str = ""
+    amazon_secret_key: str = ""
+
     @property
     def cors_origin_list(self) -> list[str]:
         return [o.strip() for o in self.cors_origins.split(",") if o.strip()]
@@ -33,6 +48,16 @@ class Settings(BaseSettings):
     @property
     def stripe_enabled(self) -> bool:
         return bool(self.stripe_secret_key) and not self.stripe_secret_key.startswith("sk_test_REPLACE")
+
+    @property
+    def amazon_api_credentials_present(self) -> bool:
+        """True only when both Amazon API credentials are configured."""
+        return bool(self.amazon_access_key) and bool(self.amazon_secret_key)
+
+    @property
+    def amazon_api_ready(self) -> bool:
+        """True only when the API is enabled AND fully configured."""
+        return self.amazon_api_enabled and self.amazon_api_credentials_present
 
 
 @lru_cache

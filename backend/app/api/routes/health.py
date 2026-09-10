@@ -10,7 +10,12 @@ router = APIRouter(tags=["health"])
 
 @router.get("/health")
 async def health():
-    return {"status": "ok", "app": settings.app_name}
+    # Returns only non-sensitive information. Never return env vars, secrets,
+    # credentials, or internal configuration from any endpoint.
+    return {
+        "status": "ok",
+        "amazon_api_enabled": settings.amazon_api_enabled,
+    }
 
 
 @router.get("/health/db")

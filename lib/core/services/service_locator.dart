@@ -6,16 +6,20 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 import '../../data/datasource/affiliate_datasource.dart';
+import '../../data/datasource/amazon_remote_datasource.dart';
 import '../../data/datasource/auth_remote_datasource.dart';
 import '../../data/datasource/remote_affiliate_datasource.dart';
 import '../../data/datasource/product_remote_datasource.dart';
 import '../../data/repositories/affiliate_repository_impl.dart';
+import '../../data/repositories/amazon_repository_impl.dart';
 import '../../data/repositories/auth_repository_impl.dart';
 import '../../data/repositories/product_repository_impl.dart';
 import '../../domain/repositories/affiliate_repository.dart';
+import '../../domain/repositories/amazon_repository.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../../domain/repositories/product_repository.dart';
 import '../../domain/usecases/affiliate_usecase.dart';
+import '../../domain/usecases/amazon_usecase.dart';
 import '../../domain/usecases/auth_usecase.dart';
 import '../../domain/usecases/product_usecase.dart';
 import '../network/dio_client.dart';
@@ -47,6 +51,15 @@ Future<void> initServiceLocator() async {
   sl.registerLazySingleton<ProductRemoteDataSource>(
     () => ProductRemoteDataSourceImpl(sl()),
   );
+
+  // Amazon Associates
+  sl.registerLazySingleton<AmazonRemoteDataSource>(
+    () => AmazonRemoteDataSourceImpl(sl()),
+  );
+  sl.registerLazySingleton<AmazonRepository>(
+    () => AmazonRepositoryImpl(remoteDataSource: sl()),
+  );
+  sl.registerLazySingleton(() => AmazonUseCase(sl()));
 
   // Affiliate program
   sl.registerLazySingleton<AffiliateDataSource>(

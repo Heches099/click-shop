@@ -13,6 +13,7 @@ import '../../../domain/entities/product.dart';
 import '../widgets/banner_slider.dart';
 import '../widgets/product_card.dart';
 import '../widgets/affiliate_promo_card.dart';
+import '../widgets/amazon_gaming_card.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -41,6 +42,13 @@ class HomeScreen extends ConsumerWidget {
               child: AffiliatePromoCard(
                 onTap: () => context.push('/affiliate'),
               ),
+            ),
+          ),
+          // AMAZON ASSOCIATES TEST: Amazon Gaming products section
+          const SliverToBoxAdapter(
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(20, 12, 20, 0),
+              child: AmazonGamingSection(),
             ),
           ),
           const SliverToBoxAdapter(

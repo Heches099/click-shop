@@ -7,8 +7,10 @@ class DioClient {
   DioClient()
       : _dio = Dio(BaseOptions(
           baseUrl: AppConstants.baseUrl,
-          connectTimeout: const Duration(seconds: 10),
-          receiveTimeout: const Duration(seconds: 10),
+          // Render free tier sleeps after idle; cold starts can take 30-60s.
+          // A short connectTimeout turns cold starts into connection timeouts.
+          connectTimeout: const Duration(seconds: 45),
+          receiveTimeout: const Duration(seconds: 45),
           headers: {'Content-Type': 'application/json'},
         )) {
     _dio.interceptors
