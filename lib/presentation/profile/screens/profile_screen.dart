@@ -1,221 +1,357 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../config/design_tokens.dart';
+import '../../core/widgets/smart_image.dart';
 import '../../../domain/entities/user.dart';
-import '../../auth/providers/auth_provider.dart';
-import '../widgets/cyber_background_painter.dart';
-import '../widgets/neon_border_avatar.dart';
 import '../../affiliate/providers/affiliate_provider.dart';
+import '../../auth/providers/auth_provider.dart';
 
-class ProfileScreen extends ConsumerStatefulWidget {
+class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
 
   @override
-  ConsumerState<ProfileScreen> createState() => _ProfileScreenState();
-}
-
-class _ProfileScreenState extends ConsumerState<ProfileScreen>
-    with TickerProviderStateMixin {
-  late AnimationController _backgroundController;
-  late AnimationController _scanController;
-  late AnimationController _fadeController;
-
-  @override
-  void initState() {
-    super.initState();
-    _backgroundController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 10),
-    )..repeat();
-    _scanController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 4),
-    )..repeat();
-    _fadeController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 900),
-    )..forward();
-  }
-
-  @override
-  void dispose() {
-    _backgroundController.dispose();
-    _scanController.dispose();
-    _fadeController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final textTheme = theme.textTheme;
-
-    // Classic color palette
-    const primaryColor = Color(0xFF1A237E); // deep navy
-    const accentColor = Color(0xFFD4AF37); // gold
-    const secondaryColor = Color(0xFF00897B); // teal
-
+  Widget build(BuildContext context, WidgetRef ref) {
     final authState = ref.watch(authProvider);
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0A0A0E),
-      body: Stack(
-        children: [
-          // Futuristic Cyber Grid Background
-          AnimatedBuilder(
-            animation: _backgroundController,
-            builder: (context, child) {
-              return CustomPaint(
-                painter: CyberBackgroundPainter(
-                  animationValue: _backgroundController.value,
+      backgroundColor: AppColors.background,
+      body: CustomScrollView(
+        physics: const BouncingScrollPhysics(),
+        slivers: [
+          _buildAppBar(),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+              child: authState.when(
+                loading: () => const SizedBox(
+                  height: 320,
+                  child: Center(child: CircularProgressIndicator()),
                 ),
-                size: Size.infinite,
-              );
-            },
-          ),
-
-          CustomScrollView(
-            physics: const BouncingScrollPhysics(),
-            slivers: [
-              _buildAppBar(accentColor),
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Column(
-                    children: [
-                      const SizedBox(height: 10),
-                      authState.when(
-                        loading: () => const SizedBox(
-                          height: 320,
-                          child: Center(
-                            child: CircularProgressIndicator(
-                              color: accentColor,
-                            ),
-                          ),
-                        ),
-                        error: (error, _) =>
-                            _buildErrorState(textTheme, accentColor),
-                        data: (user) {
-                          if (user == null) {
-                            return _buildSignedOutState(
-                                textTheme, accentColor, secondaryColor);
-                          }
-                          return _buildSignedInContent(
-                            context,
-                            textTheme,
-                            user,
-                            primaryColor,
-                            accentColor,
-                            secondaryColor,
-                          );
-                        },
-                      ),
-                      const SizedBox(height: 100),
-                    ],
-                  ),
-                ),
+                error: (error, _) => _buildErrorState(context, error),
+                data: (user) {
+                  if (user == null) return _buildSignedOutState(context);
+                  return _buildSignedInContent(context, ref, user);
+                },
               ),
-            ],
+            ),
           ),
+          const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.xl)),
+        ],
+      ),
+    );
+  }
 
-          // Scanning Line Effect
-          _buildScanningLine(accentColor),
+  Widget _buildAppBar() {
+    return SliverAppBar(
+      pinned: true,
+      centerTitle: false,
+      backgroundColor: AppColors.surface,
+      elevation: 0,
+      title: Row(
+        children: [
+          Image.asset(
+            'assets/icons/logo.png',
+            height: 30,
+            fit: BoxFit.contain,
+          ),
+          const SizedBox(width: 10),
+          Text('Profile', style: AppTypography.titleLarge),
         ],
       ),
     );
   }
 
   Widget _buildSignedInContent(
-    BuildContext context,
-    TextTheme textTheme,
-    AppUser user,
-    Color primaryColor,
-    Color accentColor,
-    Color secondaryColor,
-  ) {
+      BuildContext context, WidgetRef ref, AppUser user) {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildClassicCyberHeader(
-            textTheme, user, primaryColor, accentColor, secondaryColor),
+        _buildUserHeader(user),
+        const SizedBox(height: 24),
+        _buildAffiliateStatsRow(ref),
         const SizedBox(height: 32),
-        _buildAffiliateStatsRow(accentColor),
-        const SizedBox(height: 32),
-        _buildMenuSection(context, 'SYSTEM ACCESS', [
+        _buildMenuSection('Quick Access', [
           _MenuItem(
             icon: Icons.receipt_long_outlined,
             title: 'My Orders',
             onTap: () => context.push('/orders'),
-            accentColor: secondaryColor,
           ),
           _MenuItem(
             icon: Icons.rocket_launch_rounded,
             title: 'Affiliate Program',
             onTap: () => context.push('/affiliate'),
-            accentColor: accentColor,
           ),
           _MenuItem(
             icon: Icons.favorite_border,
             title: 'Wishlist',
             onTap: () => context.push('/wishlist'),
-            accentColor: secondaryColor,
           ),
         ]),
-        const SizedBox(height: 20),
-        _buildMenuSection(context, 'SECURITY & SETTINGS', [
+        const SizedBox(height: 24),
+        _buildMenuSection('Account', [
           _MenuItem(
             icon: Icons.location_on_outlined,
             title: 'Addresses',
             onTap: () => context.push('/addresses'),
-            accentColor: primaryColor,
           ),
           _MenuItem(
             icon: Icons.settings_outlined,
             title: 'Settings',
             onTap: () => context.push('/settings'),
-            accentColor: secondaryColor,
           ),
         ]),
-        const SizedBox(height: 40),
-        _buildLogoutButton(textTheme, accentColor),
+        const SizedBox(height: 32),
+        Center(
+          child: _buildLogoutButton(
+            context,
+            ref,
+          ),
+        ),
       ],
     );
   }
 
-  Widget _buildSignedOutState(
-      TextTheme textTheme, Color accentColor, Color secondaryColor) {
+  Widget _buildUserHeader(AppUser user) {
+    final displayName = _displayName(user);
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(28),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            secondaryColor.withValues(alpha: 0.25),
-            accentColor.withValues(alpha: 0.12),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: AppShadows.soft,
+      ),
+      child: Row(
+        children: [
+          _buildAvatar(user),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  displayName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTypography.titleLarge,
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  user.email,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTypography.labelMedium,
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: AppColors.secondary.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                        color: AppColors.secondary.withValues(alpha: 0.4)),
+                  ),
+                  child: Text(
+                    'ID: ${_shortId(user.id)}',
+                    style: AppTypography.labelMedium.copyWith(
+                      color: AppColors.secondary,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 11,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAvatar(AppUser user) {
+    final photoUrl = user.photoUrl;
+    if (photoUrl != null && photoUrl.isNotEmpty) {
+      return SmartImage(
+        imagePath: photoUrl,
+        width: 72,
+        height: 72,
+        borderRadius: BorderRadius.circular(36),
+        errorWidget: _avatarFallback(user),
+        placeholder: _avatarFallback(user),
+      );
+    }
+    return _avatarFallback(user);
+  }
+
+  Widget _avatarFallback(AppUser user) {
+    return Container(
+      width: 72,
+      height: 72,
+      decoration: const BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: AppColors.primaryGradient,
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        _initials(user),
+        style: const TextStyle(
+          color: AppColors.onPrimary,
+          fontSize: 26,
+          fontWeight: FontWeight.w800,
         ),
-        borderRadius: BorderRadius.circular(30),
-        border: Border.all(color: accentColor.withValues(alpha: 0.3)),
+      ),
+    );
+  }
+
+  Widget _buildAffiliateStatsRow(WidgetRef ref) {
+    final statsAsync = ref.watch(affiliateStatsProvider);
+
+    return statsAsync.when(
+      data: (stats) => Row(
+        children: [
+          _buildStatItem('CLICKS', '${stats.clicks}'),
+          const SizedBox(width: 12),
+          _buildStatItem('SALES', '${stats.sales}'),
+          const SizedBox(width: 12),
+          _buildStatItem(
+            'EARNED',
+            '\$${stats.commission.toStringAsFixed(0)}',
+            isPremium: true,
+          ),
+        ],
+      ),
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (_, __) => const SizedBox.shrink(),
+    );
+  }
+
+  Widget _buildStatItem(String label, String value, {bool isPremium = false}) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        decoration: BoxDecoration(
+          color: isPremium
+              ? AppColors.secondary.withValues(alpha: 0.1)
+              : AppColors.surface,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: AppShadows.soft,
+        ),
+        child: Column(
+          children: [
+            Text(
+              value,
+              style: AppTypography.titleLarge.copyWith(
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
+                color: isPremium ? AppColors.secondary : AppColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              label,
+              style: AppTypography.labelMedium.copyWith(
+                fontSize: 10,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 1,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMenuSection(String title, List<_MenuItem> items) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 8, bottom: 10),
+          child: Text(
+            title.toUpperCase(),
+            style: AppTypography.labelMedium.copyWith(
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1.4,
+            ),
+          ),
+        ),
+        ListView.separated(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          padding: EdgeInsets.zero,
+          itemCount: items.length,
+          separatorBuilder: (_, __) => const SizedBox(height: 10),
+          itemBuilder: (context, index) {
+            final item = items[index];
+            return Material(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(16),
+              child: InkWell(
+                onTap: item.onTap,
+                borderRadius: BorderRadius.circular(16),
+                child: Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: AppShadows.soft,
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: AppColors.primaryAccent,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Icon(item.icon,
+                            color: AppColors.onPrimary, size: 22),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Text(
+                          item.title,
+                          style: AppTypography.bodyLarge.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                      const Icon(Icons.chevron_right_rounded,
+                          color: AppColors.textHint),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSignedOutState(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 28),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: AppShadows.soft,
       ),
       child: Column(
         children: [
-          const NeonBorderAvatar(fallbackText: '?', size: 72),
-          const SizedBox(height: 20),
-          Text(
-            'SIGN IN REQUIRED',
-            style: textTheme.titleLarge?.copyWith(
-              color: Colors.white,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 2,
-            ),
-          ),
+          Image.asset('assets/icons/logo.png', height: 72, fit: BoxFit.contain),
+          const SizedBox(height: 24),
+          Text('Sign in required', style: AppTypography.titleLarge),
           const SizedBox(height: 8),
           Text(
             'Access your orders, wishlist and affiliate dashboard by signing in to your account.',
             textAlign: TextAlign.center,
-            style: textTheme.bodyMedium?.copyWith(color: Colors.white60),
+            style: AppTypography.bodyMedium.copyWith(
+              color: AppColors.textSecondary,
+            ),
           ),
           const SizedBox(height: 24),
           SizedBox(
@@ -223,19 +359,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
             child: FilledButton(
               onPressed: () => context.push('/login'),
               style: FilledButton.styleFrom(
-                backgroundColor: accentColor,
-                foregroundColor: Colors.black,
+                backgroundColor: AppColors.primary,
+                foregroundColor: AppColors.onPrimary,
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
                 ),
               ),
               child: const Text(
-                'SIGN IN',
-                style: TextStyle(
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 1.6,
-                ),
+                'Sign In',
+                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
               ),
             ),
           ),
@@ -245,19 +378,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
             child: OutlinedButton(
               onPressed: () => context.push('/signup'),
               style: OutlinedButton.styleFrom(
-                foregroundColor: Colors.white,
-                side: BorderSide(color: Colors.white.withValues(alpha: 0.3)),
+                foregroundColor: AppColors.textPrimary,
+                side: BorderSide(color: AppColors.border),
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
                 ),
               ),
               child: const Text(
-                'CREATE ACCOUNT',
-                style: TextStyle(
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 1.2,
-                ),
+                'Create Account',
+                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
               ),
             ),
           ),
@@ -266,35 +396,40 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
     );
   }
 
-  Widget _buildErrorState(TextTheme textTheme, Color accentColor) {
+  Widget _buildErrorState(BuildContext context, Object error) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(28),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.04),
-        borderRadius: BorderRadius.circular(30),
-        border: Border.all(color: Colors.redAccent.withValues(alpha: 0.4)),
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: AppShadows.soft,
       ),
       child: Column(
         children: [
-          const Icon(Icons.error_outline_rounded,
-              color: Colors.redAccent, size: 40),
-          const SizedBox(height: 16),
+          const Icon(Icons.cloud_off_rounded,
+              color: AppColors.error, size: 44),
+          const SizedBox(height: 14),
+          Text('Unable to load profile', style: AppTypography.titleLarge),
+          const SizedBox(height: 8),
           Text(
-            'Failed to load profile',
-            style: textTheme.titleMedium?.copyWith(
-              color: Colors.white,
-              fontWeight: FontWeight.w700,
+            '$error',
+            textAlign: TextAlign.center,
+            style: AppTypography.bodyMedium.copyWith(
+              color: AppColors.textSecondary,
             ),
           ),
           const SizedBox(height: 16),
           OutlinedButton.icon(
-            onPressed: () => ref.invalidate(authProvider),
+            onPressed: () => context.go('/profile'),
             icon: const Icon(Icons.refresh_rounded),
-            label: const Text('TRY AGAIN'),
+            label: const Text('Retry'),
             style: OutlinedButton.styleFrom(
-              foregroundColor: accentColor,
-              side: BorderSide(color: accentColor.withValues(alpha: 0.5)),
+              foregroundColor: AppColors.accent,
+              side: BorderSide(color: AppColors.accent.withValues(alpha: 0.5)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
             ),
           ),
         ],
@@ -302,107 +437,58 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
     );
   }
 
-  Widget _buildAppBar(Color accentColor) {
-    return SliverAppBar(
-      expandedHeight: 80,
-      pinned: true,
-      backgroundColor: Colors.transparent,
-      elevation: 0,
-      flexibleSpace: FlexibleSpaceBar(
-        centerTitle: true,
-        title: Text(
-          'USER_PROFILE',
-          style: TextStyle(
-            color: accentColor,
-            letterSpacing: 4,
-            fontWeight: FontWeight.bold,
-            fontSize: 18,
-          ),
+  Widget _buildLogoutButton(BuildContext context, WidgetRef ref) {
+    return OutlinedButton.icon(
+      onPressed: () => _confirmSignOut(context, ref),
+      icon: const Icon(Icons.logout_rounded, size: 18),
+      label: const Text('Sign Out'),
+      style: OutlinedButton.styleFrom(
+        foregroundColor: AppColors.error,
+        side: BorderSide(color: AppColors.error.withValues(alpha: 0.5)),
+        padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(30),
         ),
       ),
     );
   }
 
-  Widget _buildClassicCyberHeader(TextTheme textTheme, AppUser user,
-      Color primaryColor, Color accentColor, Color secondaryColor) {
-    final displayName = _displayName(user);
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            primaryColor.withValues(alpha: 0.5),
-            secondaryColor.withValues(alpha: 0.3),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(30),
-        border: Border.all(color: accentColor.withValues(alpha: 0.3)),
-        boxShadow: [
-          BoxShadow(
-            color: accentColor.withValues(alpha: 0.1),
-            blurRadius: 20,
-            spreadRadius: -5,
-          )
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(30),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-          child: Row(
-            children: [
-              NeonBorderAvatar(
-                imageUrl: user.photoUrl,
-                fallbackText: _initials(user),
-                size: 80,
-              ),
-              const SizedBox(width: 20),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      displayName,
-                      style: textTheme.headlineSmall?.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: -0.5,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      user.email,
-                      style:
-                          textTheme.bodyMedium?.copyWith(color: Colors.white70),
-                    ),
-                    const SizedBox(height: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: accentColor.withValues(alpha: 0.2),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                            color: accentColor.withValues(alpha: 0.4)),
-                      ),
-                      child: Text(
-                        'ID: ${_shortId(user.id)}',
-                        style: textTheme.bodySmall?.copyWith(
-                          color: accentColor,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+  Future<void> _confirmSignOut(BuildContext context, WidgetRef ref) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text(
+          'Sign out?',
+          style: TextStyle(
+            color: AppColors.textPrimary,
+            fontWeight: FontWeight.w700,
           ),
         ),
+        content: const Text(
+          'You will be signed out of your Click Shop account.',
+          style: TextStyle(color: AppColors.textSecondary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('CANCEL',
+                style: TextStyle(color: AppColors.textPrimary)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('SIGN OUT',
+                style: TextStyle(color: AppColors.error)),
+          ),
+        ],
       ),
     );
+
+    if (confirmed != true || !context.mounted) return;
+
+    await ref.read(authProvider.notifier).signOut();
+    if (context.mounted) context.go('/login');
   }
 
   String _displayName(AppUser user) {
@@ -429,243 +515,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
     final clean = id.length <= 8 ? id : id.substring(0, 8);
     return clean.toUpperCase();
   }
-
-  Widget _buildAffiliateStatsRow(Color accentColor) {
-    final statsAsync = ref.watch(affiliateStatsProvider);
-
-    return statsAsync.when(
-      data: (stats) => Row(
-        children: [
-          _buildStatItem('CLICKS', '${stats.clicks}', accentColor),
-          const SizedBox(width: 12),
-          _buildStatItem('SALES', '${stats.sales}', accentColor),
-          const SizedBox(width: 12),
-          _buildStatItem(
-              'EARNED', '\$${stats.commission.toStringAsFixed(0)}', accentColor,
-              isPremium: true),
-        ],
-      ),
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (_, __) => const SizedBox.shrink(),
-    );
-  }
-
-  Widget _buildStatItem(String label, String value, Color accentColor,
-      {bool isPremium = false}) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        decoration: BoxDecoration(
-          color: isPremium
-              ? accentColor.withValues(alpha: 0.15)
-              : Colors.white.withValues(alpha: 0.05),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: isPremium ? accentColor : accentColor.withValues(alpha: 0.2),
-            width: 1,
-          ),
-        ),
-        child: Column(
-          children: [
-            Text(
-              value,
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: isPremium ? accentColor : Colors.white,
-                fontSize: 20,
-              ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              label,
-              style: const TextStyle(
-                  color: Colors.white54,
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 1),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildMenuSection(
-      BuildContext context, String title, List<_MenuItem> items) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(left: 8, bottom: 12),
-          child: Text(
-            title,
-            style: const TextStyle(
-                color: Colors.white38,
-                fontSize: 11,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 2),
-          ),
-        ),
-        ListView.separated(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          padding: EdgeInsets.zero,
-          itemCount: items.length,
-          separatorBuilder: (_, __) => const SizedBox(height: 10),
-          itemBuilder: (context, index) {
-            final item = items[index];
-            return Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: item.onTap,
-                borderRadius: BorderRadius.circular(20),
-                child: Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.03),
-                    borderRadius: BorderRadius.circular(20),
-                    border:
-                        Border.all(color: Colors.white.withValues(alpha: 0.05)),
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: item.accentColor.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child:
-                            Icon(item.icon, color: item.accentColor, size: 22),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Text(
-                          item.title.toUpperCase(),
-                          style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: 1),
-                        ),
-                      ),
-                      const Icon(Icons.chevron_right_rounded,
-                          color: Colors.white24),
-                    ],
-                  ),
-                ),
-              ),
-            );
-          },
-        ),
-      ],
-    );
-  }
-
-  Future<void> _confirmSignOut() async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        backgroundColor: const Color(0xFF16161D),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-          side: BorderSide(color: Colors.redAccent.withValues(alpha: 0.4)),
-        ),
-        title: const Text(
-          'Terminate session?',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
-        ),
-        content: const Text(
-          'You will be signed out of your Click Shop account.',
-          style: TextStyle(color: Colors.white70),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('CANCEL'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text(
-              'SIGN OUT',
-              style: TextStyle(color: Colors.redAccent),
-            ),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed != true || !mounted) return;
-
-    await ref.read(authProvider.notifier).signOut();
-    if (mounted) context.go('/login');
-  }
-
-  Widget _buildLogoutButton(TextTheme textTheme, Color accentColor) {
-    return Center(
-      child: TextButton(
-        onPressed: _confirmSignOut,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 14),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(30),
-            border: Border.all(color: Colors.redAccent.withValues(alpha: 0.5)),
-          ),
-          child: Text(
-            'TERMINATE_SESSION',
-            style: textTheme.labelLarge?.copyWith(
-              color: Colors.redAccent,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 2,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildScanningLine(Color accentColor) {
-    return AnimatedBuilder(
-      animation: _scanController,
-      builder: (context, child) {
-        return Positioned(
-          top: _scanController.value * MediaQuery.of(context).size.height,
-          left: 0,
-          right: 0,
-          child: Container(
-            height: 1,
-            decoration: BoxDecoration(
-              boxShadow: [
-                BoxShadow(
-                  color: accentColor.withValues(alpha: 0.2),
-                  blurRadius: 15,
-                  spreadRadius: 1,
-                )
-              ],
-              gradient: LinearGradient(
-                colors: [
-                  accentColor.withValues(alpha: 0),
-                  accentColor.withValues(alpha: 0.4),
-                  accentColor.withValues(alpha: 0),
-                ],
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
 }
 
 class _MenuItem {
   final IconData icon;
   final String title;
   final VoidCallback onTap;
-  final Color accentColor;
 
   const _MenuItem({
     required this.icon,
     required this.title,
     required this.onTap,
-    required this.accentColor,
   });
 }

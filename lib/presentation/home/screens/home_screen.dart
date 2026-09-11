@@ -69,13 +69,10 @@ class HomeScreen extends ConsumerWidget {
             Pulse(
               infinite: true,
               duration: const Duration(milliseconds: 1200),
-              child: Text(
-                'Click Shop',
-                style: AppTypography.titleLarge.copyWith(
-                  color: const Color.fromARGB(255, 3, 112, 74),
-                  fontWeight: FontWeight.bold,
-                  height: 1.2,
-                ),
+              child: Image.asset(
+                'assets/icons/logo.png',
+                height: 40,
+                fit: BoxFit.contain,
               ),
             ),
             const Spacer(),

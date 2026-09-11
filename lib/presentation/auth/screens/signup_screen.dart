@@ -214,22 +214,10 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                                 ),
                               ),
                               const Spacer(),
-                              const Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(Icons.bolt_rounded,
-                                      color: Colors.amberAccent, size: 22),
-                                  SizedBox(width: 6),
-                                  Text(
-                                    'CLICK SHOP',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.w900,
-                                      letterSpacing: 2.4,
-                                      fontSize: 16,
-                                    ),
-                                  ),
-                                ],
+                              Image.asset(
+                                'assets/icons/logo.png',
+                                height: 44,
+                                fit: BoxFit.contain,
                               ),
                               const Spacer(),
                             ],
