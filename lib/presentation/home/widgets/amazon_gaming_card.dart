@@ -11,16 +11,16 @@ import '../../core/widgets/smart_image.dart';
 import '../providers/amazon_provider.dart';
 
 /// ---------------------------------------------------------------------------
-/// AMAZON ASSOCIATES — "Shop Gaming on Amazon" affiliate section.
+/// AMAZON ASSOCIATES — "Shop on Amazon" affiliate section.
 ///
 /// ACTIVE MODE (affiliate links): shows curated category destination cards
 /// backed by the backend's `/amazon/categories`. Each card opens Amazon
 /// directly with the tracking ID (clickshop03b-20) that the backend placed
-/// in the URL. No live inventory is shown and none is claimed.
+/// in the URL. A "Deals from Amazon" row shows the curated real products
+/// returned by the backend.
 ///
-/// FUTURE MODE (Amazon Creators API): when the backend starts returning real
-/// products from `amazonGamingProductsProvider`, a "Deals from Amazon" row
-/// appears above the category cards — without any Flutter rewrite.
+/// FUTURE MODE (Amazon Creators API): when the backend starts returning live
+/// API products, the same row renders them — without any Flutter rewrite.
 ///
 /// Resilience: while the backend loads, and on any error, a single friendly
 /// fallback card is shown so the section is never a forever-spinner.
@@ -90,7 +90,7 @@ class AmazonGamingSection extends ConsumerWidget {
                   color: Colors.white, size: 18),
             ),
             const SizedBox(width: 10),
-            Text('Shop Gaming on Amazon',
+            Text('Shop on Amazon',
                 style: AppTypography.titleLarge.copyWith(fontSize: 18)),
           ],
         ),

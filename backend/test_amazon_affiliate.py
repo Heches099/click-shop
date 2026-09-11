@@ -112,7 +112,7 @@ settings.amazon_secret_key = ""
 r = client.get("/v1/amazon/categories")
 cats = r.json()
 check("categories 200", r.status_code == 200)
-check("categories count", isinstance(cats, list) and len(cats) == 8, str(len(cats)))
+check("categories count", isinstance(cats, list) and len(cats) == 15, str(len(cats)))
 if cats:
     first = cats[0]
     need = ["id", "name", "description", "keyword", "imageKey", "affiliateUrl"]
@@ -197,6 +197,11 @@ missing = asyncio.run(_by_asin("AAAAAAAAAA"))
 check("unknown asin lookup returns None", missing is None)
 by_cat = asyncio.run(prov.search_products("gaming", category=products[0].category))
 check("category filter works", all(p.category == products[0].category for p in by_cat) and len(by_cat) > 0)
+by_mens = asyncio.run(prov.search_products("", category="mens-fashion"))
+by_womens = asyncio.run(prov.search_products("", category="womens-fashion"))
+check("curated has men's fashion clothes", isinstance(by_mens, list) and len(by_mens) > 0, str(len(by_mens) if isinstance(by_mens, list) else 0))
+check("curated has women's fashion clothes", isinstance(by_womens, list) and len(by_womens) > 0, str(len(by_womens) if isinstance(by_womens, list) else 0))
+check("curated catalog is substantial", len(products) >= 20, str(len(products)))
 
 
 REMOVE_DB = True
