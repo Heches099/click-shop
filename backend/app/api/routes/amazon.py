@@ -2,7 +2,9 @@
 
 * Affiliate categories are always available and are built server-side from
   trusted configuration via the centralized URL service.
-* Product search returns [] while Amazon API access is disabled/ineligible.
+* Product search returns the curated real-product catalog (approved static
+  config) in link mode; it returns [] only when an API provider is in use
+  but unavailable/ineligible.
 * Product lookup validates the ASIN before doing anything.
 * No endpoint accepts an arbitrary URL, and the backend never fetches a
   user-supplied URL (no SSRF).
@@ -94,8 +96,8 @@ async def get_amazon_products(
 ) -> list[dict]:
     """Search Amazon products.
 
-    Returns [] when the Amazon API is disabled or not eligible. Fails safe —
-    never crashes and never returns an error containing internals.
+    In link mode this returns real products from the curated static catalog.
+    Fails safe — never crashes and never returns an error containing internals.
     """
     # `q` is only ever used as a search term for the future API provider;
     # it is never treated as a URL and never fetched client-side.

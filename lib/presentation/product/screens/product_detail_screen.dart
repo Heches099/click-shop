@@ -4,10 +4,10 @@ import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:web/web.dart' as web;
 import '../../../config/design_tokens.dart';
 import '../../../core/services/ads/ad_config.dart';
 import '../../../core/services/seo/seo_service.dart';
+import '../../../core/utils/open_link.dart';
 import '../../../core/utils/responsive.dart';
 import '../../../core/widgets/affiliate_disclosure.dart';
 import '../../../core/widgets/google_ad_banner.dart';
@@ -542,9 +542,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
   /// Amazon affiliate URL with tracking ID: clickshop03b-20
   Widget _buildAmazonBuyButton(Product product) {
     return GestureDetector(
-      onTap: () {
-        web.window.open(product.amazonUrl!, '_blank');
-      },
+      onTap: () => openExternalLink(product.amazonUrl!),
       child: Container(
         width: double.infinity,
         height: 56,

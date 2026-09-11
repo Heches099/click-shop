@@ -3,7 +3,7 @@
 Architecture
 ------------
     AffiliateProvider
-      ├── AffiliateLinkProvider       (ACTIVE — curated affiliate links only)
+      ├── AffiliateLinkProvider       (ACTIVE — curated real products + links)
       └── AmazonCreatorsApiProvider   (FUTURE — official Amazon API when eligible)
 
 Flutter never talks to Amazon directly — it only talks to the Click Shop
@@ -11,7 +11,10 @@ backend. The backend normalizes whatever the active provider returns into
 the internal Click Shop product model.
 
 Affiliate Link Mode (current): curated destination categories with affiliate
-URLs are always available and require no API credentials.
+URLs are always available and require no API credentials, plus a hand-picked
+set of REAL Amazon products (real ASINs + verified CDN product images) served
+as static configuration. Prices are intentionally omitted: prices are shown
+only when Amazon API access supplies live, correct, localized quotes.
 
 Amazon API mode (future): when the Associates account becomes eligible for
 the Amazon Creators API / PA-API, implement search_products/get_product_by_asin
@@ -57,6 +60,7 @@ class AmazonProduct:
     rating: float = 0.0
     review_count: int = 0
     brand: str = ""
+    category: str = ""
     detail_page_url: str = ""
 
 
@@ -121,6 +125,109 @@ CURATED_AFFILIATE_CATEGORIES: tuple[AffiliateCategory, ...] = (
     ),
 )
 
+# ---------------------------------------------------------------------------
+# Curated REAL Amazon products — hand-picked, image-verified in 2025/2026.
+# Prices are intentionally omitted (0.0): Amazon prices are localized and
+# stale snapshots would be misleading. The Flutter card hides $0 prices.
+# All ASINs are structurally valid and map to live Amazon detail pages.
+# ---------------------------------------------------------------------------
+CURATED_AMAZON_PRODUCTS: tuple[AmazonProduct, ...] = (
+    AmazonProduct(
+        asin="B0DW1X5YCQ",
+        title=(
+            "ASUS ROG Strix G16 (2025) Gaming Laptop, 16\" ROG Nebula 2.5K "
+            "240Hz, NVIDIA GeForce RTX 5070 Ti, Intel Core Ultra 9 275HX, "
+            "32GB DDR5, 1TB SSD, G615LR-AS96"
+        ),
+        image_url="https://m.media-amazon.com/images/I/71dvs4J6B7L.jpg",
+        price=0.0,
+        currency="USD",
+        rating=0.0,
+        review_count=0,
+        brand="ASUS",
+        category="gaming-laptops",
+        detail_page_url="https://www.amazon.com/dp/B0DW1X5YCQ",
+    ),
+    AmazonProduct(
+        asin="B0FNR773ZJ",
+        title=(
+            "Prebuilt Gaming Desktop PC, AMD Ryzen 5 5500, GeForce RTX 3050 "
+            "6GB, 16GB DDR4 3200MHz RAM, 1TB NVMe SSD, ARGB Air Cooling, "
+            "Wi-Fi, Tower Computer for Gaming, Streaming, Editing"
+        ),
+        image_url="https://m.media-amazon.com/images/I/61dF5SPnpyL.jpg",
+        price=0.0,
+        currency="USD",
+        rating=0.0,
+        review_count=0,
+        brand="iBUYPOWER",
+        category="gaming-pcs",
+        detail_page_url="https://www.amazon.com/dp/B0FNR773ZJ",
+    ),
+    AmazonProduct(
+        asin="B0GLV9PML4",
+        title=(
+            "Samsung 27\" Odyssey G5 (G51F) Series QHD 1440P Gaming Monitor, "
+            "180Hz, 1ms, AMD FreeSync, HDR10, Height Adjustable Stand"
+        ),
+        image_url="https://m.media-amazon.com/images/I/71BMK6HmBbL.jpg",
+        price=0.0,
+        currency="USD",
+        rating=0.0,
+        review_count=0,
+        brand="Samsung",
+        category="gaming-monitors",
+        detail_page_url="https://www.amazon.com/dp/B0GLV9PML4",
+    ),
+    AmazonProduct(
+        asin="B0CVPHDLTD",
+        title=(
+            "ASUS Dual GeForce RTX 4060 Ti EVO OC Edition 8GB GDDR6, "
+            "DLSS 3, HDMI 2.1a, DisplayPort 1.4a, Axial-tech Fan Design, "
+            "3 Year Warranty"
+        ),
+        image_url="https://m.media-amazon.com/images/I/41MMvMtwqnL.jpg",
+        price=0.0,
+        currency="USD",
+        rating=0.0,
+        review_count=0,
+        brand="ASUS",
+        category="graphics-cards",
+        detail_page_url="https://www.amazon.com/dp/B0CVPHDLTD",
+    ),
+    AmazonProduct(
+        asin="B07G11G2X8",
+        title=(
+            "Redragon K580 Wired RGB Mechanical Gaming Keyboard, Macro Key "
+            "& Media Wheel, 5 On-Board Keybinding Buttons, Blue Switches"
+        ),
+        image_url="https://m.media-amazon.com/images/I/71NFUiC1XaL.jpg",
+        price=0.0,
+        currency="USD",
+        rating=0.0,
+        review_count=0,
+        brand="Redragon",
+        category="gaming-keyboards",
+        detail_page_url="https://www.amazon.com/dp/B07G11G2X8",
+    ),
+    AmazonProduct(
+        asin="B07QKC4WWD",
+        title=(
+            "Logitech G502 Lightspeed Wireless Gaming Mouse, Hero 16K "
+            "Sensor, 16000 DPI, RGB, Adjustable Weights, 11 Programmable "
+            "Buttons, PC/Mac - Black"
+        ),
+        image_url="https://m.media-amazon.com/images/I/31bygHDH1hL.jpg",
+        price=0.0,
+        currency="USD",
+        rating=0.0,
+        review_count=0,
+        brand="Logitech",
+        category="gaming-mouse",
+        detail_page_url="https://www.amazon.com/dp/B07QKC4WWD",
+    ),
+)
+
 
 class AffiliateProvider(abc.ABC):
     """Abstract interface implemented by every affiliate provider.
@@ -147,11 +254,12 @@ class AffiliateProvider(abc.ABC):
 
 
 class AffiliateLinkProvider(AffiliateProvider):
-    """ACTIVE MODE — curated affiliate destination links only.
+    """ACTIVE MODE — curated real Amazon products + category search links.
 
-    No live Amazon inventory is fetched, no scraping occurs, and the UI
-    makes no claim of live products. Product endpoints return empty/safe
-    results.
+    Product endpoints return the hand-picked [CURATED_AMAZON_PRODUCTS]
+    (real ASINs + verified CDN images). Prices are omitted because they are
+    locale-dependent and change frequently.  Category endpoints continue to
+    return curated search-page links with the tracking tag.
     """
 
     async def search_products(
@@ -160,10 +268,29 @@ class AffiliateLinkProvider(AffiliateProvider):
         category: str = "",
         item_count: int = 20,
     ) -> list[AmazonProduct]:
-        return []
+        cat = (category or "").strip().lower()
+        q = (query or "").strip().lower()
+        results = list(CURATED_AMAZON_PRODUCTS)
+        if cat and cat not in ("gaming", "amazon"):
+            results = [p for p in results if p.category.lower() == cat]
+        if q and q not in ("gaming", "amazon"):
+            tokens = [t for t in q.split() if len(t) >= 3]
+            if tokens:
+                results = [
+                    p
+                    for p in results
+                    if all(
+                        t in (p.title + " " + p.brand + " " + p.category).lower()
+                        for t in tokens
+                    )
+                ]
+        return results[:item_count]
 
     async def get_product_by_asin(self, asin: str) -> AmazonProduct | None:
-        return None
+        normalized = asin.strip().upper()
+        return next(
+            (p for p in CURATED_AMAZON_PRODUCTS if p.asin == normalized), None
+        )
 
 
 class AmazonCreatorsApiProvider(AffiliateProvider):

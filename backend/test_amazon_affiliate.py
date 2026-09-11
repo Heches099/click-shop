@@ -120,10 +120,19 @@ if cats:
     check("category affiliateUrl has tag", "tag=clickshop03b-20" in first["affiliateUrl"], first["affiliateUrl"])
     check("category affiliateUrl is amazon.com", "amazon.com" in first["affiliateUrl"], first["affiliateUrl"])
 
-# --- 6. Products endpoint (API disabled -> empty) ---
+# --- 6. Products endpoint (link mode -> curated real products) ---
 r = client.get("/v1/amazon/products?q=gaming")
+items = r.json()
 check("products 200", r.status_code == 200)
-check("products empty when disabled", r.json() == [])
+check("products curated non-empty", isinstance(items, list) and len(items) > 0, str(len(items)))
+need = ["id", "name", "price", "images", "asin", "amazonUrl", "brand", "category"]
+check("products shape", all(k in items[0] for k in need), f"{list(items[0].keys())}")
+curl = items[0]["amazonUrl"]
+check("product affiliateUrl has tag", "tag=clickshop03b-20" in curl, curl)
+check("product affiliateUrl is amazon.com", curl.startswith("https://www.amazon.com/dp/"), curl)
+img = items[0]["images"][0]
+check("product image is real CDN https", img.startswith("https://m.media-amazon.com/images/I/") and img.endswith(".jpg"), img)
+check("curated prices hidden (0.0)", all(p["price"] == 0.0 for p in items))
 
 # --- 7. Invalid ASIN -> 400 ---
 r = client.get("/v1/amazon/products/BADASIN")
@@ -144,7 +153,7 @@ check("path-traversal query safe 200/[]", r.status_code in (200, 400), r.text[:8
 # A malicious "url" parameter must be ignored (FastAPI allows unknown params
 # but our endpoint never reads/fetches it).
 r = client.get("/v1/amazon/products?q=gaming&url=https://evil.example.com/internal")
-check("arbitrary url param ignored", r.status_code == 200 and r.json() == [], r.text[:80])
+check("arbitrary url param ignored", r.status_code == 200, r.text[:80])
 body = r.text
 check("url not echoed", "evil.example.com" not in body)
 
@@ -163,7 +172,7 @@ for path in ["/v1/amazon/categories", "/v1/amazon/products?q=gaming", "/v1/healt
         check("health only safe keys", set(r.json().keys()) <= secrets_only_safe_keys, f"{list(r.json().keys())}")
         check("health safe values", r.json().get("amazon_api_enabled") is False and r.json().get("status") == "ok")
 
-# --- 11. Provider never returns live data in link mode ---
+# --- 11. Provider returns curated products + asin lookups in link mode ---
 prov = get_amazon_provider()
 products = None
 import asyncio
@@ -173,8 +182,21 @@ async def _search():
     return await prov.search_products("gaming", item_count=20)
 
 
+async def _by_asin(asin):
+    return await prov.get_product_by_asin(asin)
+
+
 products = asyncio.run(_search())
-check("link provider returns no products", products == [])
+check("provider returns curated products", isinstance(products, list) and len(products) > 0, str(len(products)))
+check("curated asins are valid", all(len(p.asin) == 10 and p.asin.isalnum() for p in products))
+check("curated images are real CDN", all(p.image_url.startswith("https://m.media-amazon.com/images/I/") for p in products))
+check("curated titles non-empty", all(p.title.strip() for p in products))
+found = asyncio.run(_by_asin(products[0].asin))
+check("asin lookup returns product", found is not None and found.asin == products[0].asin)
+missing = asyncio.run(_by_asin("AAAAAAAAAA"))
+check("unknown asin lookup returns None", missing is None)
+by_cat = asyncio.run(prov.search_products("gaming", category=products[0].category))
+check("category filter works", all(p.category == products[0].category for p in by_cat) and len(by_cat) > 0)
 
 
 REMOVE_DB = True

@@ -2,9 +2,9 @@ import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:web/web.dart' as web;
 import '../../../config/design_tokens.dart';
 import '../../../core/constants/amazon_affiliate.dart';
+import '../../../core/utils/open_link.dart';
 import '../../../core/widgets/amazon_disclosure.dart';
 import '../../../domain/entities/amazon_product.dart';
 import '../../core/widgets/smart_image.dart';
@@ -95,8 +95,7 @@ class AmazonGamingSection extends ConsumerWidget {
           ],
         ),
         TextButton(
-          onPressed: () =>
-              web.window.open(kAmazonAffiliateFallbackUrl, '_blank'),
+          onPressed: () => openExternalLink(kAmazonAffiliateFallbackUrl),
           child: const Text('View All',
               style: TextStyle(color: Color(0xFFFF9900))),
         ),
@@ -153,7 +152,7 @@ class AmazonGamingSection extends ConsumerWidget {
   Widget _buildFallbackCard() {
     return FadeInUp(
       child: GestureDetector(
-        onTap: () => web.window.open(kAmazonAffiliateFallbackUrl, '_blank'),
+        onTap: () => openExternalLink(kAmazonAffiliateFallbackUrl),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
           decoration: BoxDecoration(
@@ -273,7 +272,7 @@ class _CategoryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () => web.window.open(view.affiliateUrl, '_blank'),
+      onTap: () => openExternalLink(view.affiliateUrl),
       child: Container(
         decoration: BoxDecoration(
           color: AppColors.surface,
@@ -444,22 +443,23 @@ class _AmazonProductCard extends StatelessWidget {
                         ),
                         const SizedBox(width: 4),
                       ],
-                      Expanded(
-                        child: Text(
-                          '\$${amazonProduct.price.toStringAsFixed(2)}',
-                          style: AppTypography.bodyLarge.copyWith(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.primary,
+                      if (amazonProduct.price > 0)
+                        Expanded(
+                          child: Text(
+                            '\$${amazonProduct.price.toStringAsFixed(2)}',
+                            style: AppTypography.bodyLarge.copyWith(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.primary,
+                            ),
                           ),
                         ),
-                      ),
                     ],
                   ),
                   const SizedBox(height: 6),
                   GestureDetector(
-                    onTap: () => web.window.open(
-                        amazonProduct.amazonUrl, '_blank'),
+                    onTap: () =>
+                        openExternalLink(amazonProduct.amazonUrl),
                     child: Container(
                       width: double.infinity,
                       padding: const EdgeInsets.symmetric(vertical: 6),
