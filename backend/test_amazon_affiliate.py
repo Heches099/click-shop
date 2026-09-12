@@ -134,6 +134,13 @@ img = items[0]["images"][0]
 check("product image is real CDN https", img.startswith("https://m.media-amazon.com/images/I/") and img.endswith(".jpg"), img)
 check("curated prices hidden (0.0)", all(p["price"] == 0.0 for p in items))
 
+# --- 6b. Empty / omitted query returns the full catalog (no 422) ---
+for url in ["/v1/amazon/products?q=", "/v1/amazon/products?q=&category=&limit=50", "/v1/amazon/products"]:
+    r = client.get(url)
+    body = r.json()
+    check(f"empty-q ok 200 ({url.split('?')[0]})", r.status_code == 200, r.text[:80])
+    check(f"empty-q full catalog ({url.split('?')[0]})", isinstance(body, list) and len(body) > 0, str(len(body) if isinstance(body, list) else 0))
+
 # --- 7. Invalid ASIN -> 400 ---
 r = client.get("/v1/amazon/products/BADASIN")
 check("invalid asin 400", r.status_code == 400)

@@ -1,3 +1,4 @@
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -12,6 +13,20 @@ app = FastAPI(
     redoc_url="/redoc",
     openapi_url="/openapi.json",
 )
+
+if settings.jwt_secret == "change-me":
+    print(
+        "WARNING: JWT_SECRET is the insecure default 'change-me'. "
+        "Set a unique JWT_SECRET in the environment before going live; "
+        "a predictable signing key lets attackers forge admin tokens.",
+        flush=True,
+    )
+if settings.admin_password == "ChangeMe123!":
+    print(
+        "WARNING: ADMIN_PASSWORD is the insecure default 'ChangeMe123!'. "
+        "Set a unique ADMIN_PASSWORD before seeding/production.",
+        flush=True,
+    )
 
 app.add_middleware(
     CORSMiddleware,

@@ -90,7 +90,7 @@ async def get_affiliate_categories() -> list[dict]:
 
 @router.get("/products")
 async def get_amazon_products(
-    q: str = Query(default="gaming", min_length=1, max_length=MAX_KEYWORD_LENGTH),
+    q: str = Query(default="", max_length=MAX_KEYWORD_LENGTH),
     category: str = Query(default="", max_length=MAX_KEYWORD_LENGTH),
     limit: int = Query(default=20, ge=1, le=50),
 ) -> list[dict]:

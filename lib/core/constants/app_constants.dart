@@ -12,11 +12,6 @@ class AppConstants {
   /// Replace with your real key before going live.
   static const String stripePublishableKey = 'pk_test_REPLACE_ME';
 
-  /// Stripe secret key.
-  /// NEVER ship this in a client app in production - create PaymentIntents
-  /// on your backend (e.g. a Firebase Cloud Function) instead.
-  static const String stripeSecretKey = 'sk_test_REPLACE_ME';
-
   /// Public store URL used to build affiliate referral links.
   /// Replace with your deployed web/domain URL before going live.
   static const String storeBaseUrl = 'https://click-shop-d62ad.web.app';
