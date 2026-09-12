@@ -22,6 +22,7 @@ import '../../domain/usecases/affiliate_usecase.dart';
 import '../../domain/usecases/amazon_usecase.dart';
 import '../../domain/usecases/auth_usecase.dart';
 import '../../domain/usecases/product_usecase.dart';
+import '../../presentation/saved/data/saved_store.dart';
 import '../network/dio_client.dart';
 import '../network/network_info.dart';
 import 'payments/payment_service.dart';
@@ -60,6 +61,7 @@ Future<void> initServiceLocator() async {
     () => AmazonRepositoryImpl(remoteDataSource: sl()),
   );
   sl.registerLazySingleton(() => AmazonUseCase(sl()));
+  sl.registerLazySingleton(() => SavedStore());
 
   // Affiliate program
   sl.registerLazySingleton<AffiliateDataSource>(

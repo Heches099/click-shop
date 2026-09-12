@@ -1,12 +1,12 @@
 import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import '../../../config/design_tokens.dart';
 import '../../../core/constants/amazon_affiliate.dart';
 import '../../../core/utils/open_link.dart';
 import '../../../core/widgets/amazon_disclosure.dart';
 import '../../../domain/entities/amazon_product.dart';
+import '../../core/widgets/amazon_product_card.dart';
 import '../../core/widgets/smart_image.dart';
 import '../providers/amazon_provider.dart';
 
@@ -117,12 +117,14 @@ class AmazonGamingSection extends ConsumerWidget {
 
   Widget _buildProductRow(List<AmazonProduct> products) {
     return SizedBox(
-      height: 250,
+      height: 260,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         itemCount: products.length,
-        itemBuilder: (context, index) =>
-            _AmazonProductCard(amazonProduct: products[index]),
+        itemBuilder: (context, index) => SizedBox(
+          width: 160,
+          child: AmazonProductCard(amazonProduct: products[index]),
+        ),
       ),
     );
   }
@@ -351,134 +353,6 @@ class _CategoryCard extends StatelessWidget {
                     ),
                   ],
                 ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Individual Amazon product card for the horizontal row (FUTURE mode —
-/// only rendered when the backend actually returns real products).
-class _AmazonProductCard extends StatelessWidget {
-  final AmazonProduct amazonProduct;
-
-  const _AmazonProductCard({required this.amazonProduct});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        final product = amazonProduct.toProduct();
-        context.push('/product/${product.id}', extra: product);
-      },
-      child: Container(
-        width: 160,
-        margin: const EdgeInsets.only(right: 12),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: AppShadows.soft,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: Container(
-                width: double.infinity,
-                decoration: const BoxDecoration(
-                  color: Color(0xFFF5F5F5),
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-                ),
-                child: amazonProduct.images.isNotEmpty
-                    ? ClipRRect(
-                        borderRadius: const BorderRadius.vertical(
-                            top: Radius.circular(16)),
-                        child: SmartImage(
-                          imagePath: amazonProduct.images.first,
-                          width: double.infinity,
-                          height: double.infinity,
-                        ),
-                      )
-                    : const Center(
-                        child: Icon(Icons.shopping_bag_outlined,
-                            size: 40, color: AppColors.border),
-                      ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(10),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    amazonProduct.brand,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppTypography.labelMedium.copyWith(fontSize: 11),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    amazonProduct.name,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppTypography.bodyMedium.copyWith(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Row(
-                    children: [
-                      if (amazonProduct.rating > 0) ...[
-                        const Icon(Icons.star_rounded,
-                            color: Color(0xFFFF9900), size: 14),
-                        const SizedBox(width: 2),
-                        Text(
-                          '${amazonProduct.rating}',
-                          style: AppTypography.labelMedium
-                              .copyWith(fontSize: 11),
-                        ),
-                        const SizedBox(width: 4),
-                      ],
-                      if (amazonProduct.price > 0)
-                        Expanded(
-                          child: Text(
-                            '\$${amazonProduct.price.toStringAsFixed(2)}',
-                            style: AppTypography.bodyLarge.copyWith(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.primary,
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
-                  GestureDetector(
-                    onTap: () =>
-                        openExternalLink(amazonProduct.amazonUrl),
-                    child: Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(vertical: 6),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFFF9900),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      alignment: Alignment.center,
-                      child: const Text(
-                        'Buy on Amazon',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
               ),
             ),
           ],

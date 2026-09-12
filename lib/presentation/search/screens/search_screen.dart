@@ -2,11 +2,12 @@ import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../config/design_tokens.dart';
+import '../../../core/utils/open_link.dart';
 import '../../../core/utils/responsive.dart';
-import '../../../domain/entities/product.dart';
-import '../../home/providers/home_provider.dart';
-import '../../home/widgets/product_card.dart';
-import '../widgets/filter_bottom_sheet.dart';
+import '../../../core/widgets/amazon_disclosure.dart';
+import '../../../domain/entities/amazon_product.dart';
+import '../../core/widgets/amazon_product_card.dart';
+import '../../home/providers/amazon_provider.dart';
 
 class SearchScreen extends ConsumerStatefulWidget {
   const SearchScreen({super.key});
@@ -16,12 +17,15 @@ class SearchScreen extends ConsumerStatefulWidget {
 }
 
 class _SearchScreenState extends ConsumerState<SearchScreen> {
-  static const double _maxPrice = 2000;
-
   final TextEditingController _searchController = TextEditingController();
-  List<String> _history = ['Nike Air Max', 'Smart Watch', 'Casual T-shirt'];
+  List<String> _history = [
+    "Levi's 501",
+    'AirPods Pro',
+    'Instant Pot',
+    'CeraVe',
+  ];
   String _query = '';
-  ProductFilters _filters = const ProductFilters();
+  String? _selectedCategory;
 
   @override
   void dispose() {
@@ -29,53 +33,24 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     super.dispose();
   }
 
-  bool get _showResults => _query.trim().isNotEmpty || _filters.isActive;
+  bool get _showResults =>
+      _query.trim().isNotEmpty || _selectedCategory != null;
 
-  List<Product> _filterResults(List<Product> all) {
+  List<AmazonProduct> _filterResults(List<AmazonProduct> all) {
     final q = _query.trim().toLowerCase();
-    final list = all.where((p) {
-      final matchesQuery = q.isEmpty ||
-          p.name.toLowerCase().contains(q) ||
-          p.brand.toLowerCase().contains(q) ||
-          p.category.toLowerCase().contains(q);
-      final inRange = p.price >= _filters.priceRange.start &&
-          p.price <= _filters.priceRange.end;
-      final inBrands = _filters.brands.isEmpty ||
-          _filters.brands.any(
-              (b) => b.trim().toLowerCase() == p.brand.trim().toLowerCase());
-      return matchesQuery && inRange && inBrands;
+    final selected = _selectedCategory?.toLowerCase();
+    return all.where((p) {
+      final matchesCategory =
+          selected == null || selected == 'all' || p.category.toLowerCase() == selected;
+      final tokens = q
+          .split(RegExp(r'\s+'))
+          .where((t) => t.length >= 3)
+          .toList();
+      final haystack = '${p.name} ${p.brand} ${p.category}'.toLowerCase();
+      final matchesQuery =
+          tokens.isEmpty || tokens.every((t) => haystack.contains(t));
+      return matchesCategory && matchesQuery;
     }).toList();
-    switch (_filters.sort) {
-      case 'Price: Low to High':
-        list.sort((a, b) => a.price.compareTo(b.price));
-      case 'Price: High to Low':
-        list.sort((a, b) => b.price.compareTo(a.price));
-      default:
-        list.sort((a, b) => b.reviewCount.compareTo(a.reviewCount));
-    }
-    return list;
-  }
-
-  List<String> _brandsOf(List<Product> all) {
-    final set = all
-        .map((p) => p.brand.trim())
-        .where((b) => b.isNotEmpty)
-        .toSet()
-        .toList();
-    set.sort();
-    return set;
-  }
-
-  List<MapEntry<String, int>> _popularCategoriesOf(List<Product> all) {
-    final counts = <String, int>{};
-    for (final p in all) {
-      final c = p.category.trim();
-      if (c.isEmpty) continue;
-      counts[c] = (counts[c] ?? 0) + 1;
-    }
-    final entries = counts.entries.toList()
-      ..sort((a, b) => b.value.compareTo(a.value));
-    return entries.take(4).toList();
   }
 
   void _applyQuery(String value) {
@@ -95,35 +70,30 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     });
   }
 
-  Future<void> _openFilters() async {
-    final all = ref.read(allProductsProvider).value ?? const <Product>[];
-    final result = await showModalBottomSheet<ProductFilters>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => FilterBottomSheet(
-        initialFilters: _filters,
-        brands: _brandsOf(all),
-      ),
-    );
-    if (result != null) {
-      setState(() => _filters = result);
-    }
-  }
-
   void _clearFilters() {
-    setState(() => _filters = const ProductFilters());
+    setState(() {
+      _query = '';
+      _selectedCategory = null;
+    });
   }
 
-  void _updateFilters(ProductFilters next) {
-    setState(() => _filters = next);
+  void _selectCategory(String? category) {
+    final normalized = category?.toLowerCase();
+    setState(() {
+      _selectedCategory =
+          (normalized == null || normalized == 'all' || normalized.isEmpty)
+              ? null
+              : category;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    final productsAsync = ref.watch(allProductsProvider);
-    final all = productsAsync.value ?? const <Product>[];
+    final productsAsync = ref.watch(amazonAllProductsProvider);
+    final categoriesAsync = ref.watch(amazonAffiliateCategoriesProvider);
+    final all = productsAsync.value ?? const <AmazonProduct>[];
     final results = _filterResults(all);
+    final categories = categoriesAsync.value ?? const [];
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -134,6 +104,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               duration: const Duration(milliseconds: 500),
               child: _buildSearchBar(),
             ),
+            if (categories.isNotEmpty)
+              _buildCategoryChips(categories),
             Expanded(
               child: productsAsync.isLoading
                   ? const Center(child: CircularProgressIndicator())
@@ -141,7 +113,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                       ? _buildLoadError()
                       : _showResults
                           ? _buildResults(results)
-                          : _buildIdleContent(all),
+                          : _buildIdleContent(categories),
             ),
           ],
         ),
@@ -167,7 +139,10 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           ),
           const SizedBox(height: 16),
           OutlinedButton.icon(
-            onPressed: () => ref.invalidate(allProductsProvider),
+            onPressed: () {
+              ref.invalidate(amazonAllProductsProvider);
+              ref.invalidate(amazonAffiliateCategoriesProvider);
+            },
             icon: const Icon(Icons.refresh_rounded),
             label: const Text('Retry'),
           ),
@@ -178,7 +153,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
 
   Widget _buildSearchBar() {
     return Padding(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
       child: Row(
         children: [
           Expanded(
@@ -192,7 +167,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                 controller: _searchController,
                 textInputAction: TextInputAction.search,
                 decoration: InputDecoration(
-                  hintText: 'Search for products...',
+                  hintText: 'Search Amazon products...',
                   prefixIcon: const Icon(Icons.search_rounded,
                       color: AppColors.primary),
                   suffixIcon: _query.isNotEmpty
@@ -207,49 +182,56 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               ),
             ),
           ),
-          const SizedBox(width: 12),
-          GestureDetector(
-            onTap: _openFilters,
-            child: Stack(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: AppColors.primary,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.primary.withValues(alpha: 0.3),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: const Icon(Icons.tune_rounded,
-                      color: Colors.white, size: 24),
-                ),
-                if (_filters.isActive)
-                  Positioned(
-                    top: 6,
-                    right: 6,
-                    child: Container(
-                      width: 10,
-                      height: 10,
-                      decoration: const BoxDecoration(
-                        color: AppColors.error,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-          ),
         ],
       ),
     );
   }
 
-  Widget _buildIdleContent(List<Product> all) {
+  Widget _buildCategoryChips(List<AmazonAffiliateCategory> categories) {
+    return SizedBox(
+      height: 44,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        children: [
+          _buildChip('All', _selectedCategory == null),
+          ...categories
+              .map((c) => _buildChip(c.name, _selectedCategory == c.name)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildChip(String label, bool isSelected) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 8),
+      child: GestureDetector(
+        onTap: () => _selectCategory(isSelected ? null : label),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: isSelected ? AppColors.primary : AppColors.surface,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: isSelected ? AppColors.primary : AppColors.border,
+            ),
+            boxShadow: isSelected ? null : AppShadows.soft,
+          ),
+          child: Text(
+            label,
+            style: AppTypography.labelMedium.copyWith(
+              color: isSelected ? AppColors.onPrimary : AppColors.textPrimary,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildIdleContent(List<AmazonAffiliateCategory> categories) {
     return ListView(
       physics: const BouncingScrollPhysics(),
       padding: const EdgeInsets.all(20),
@@ -266,13 +248,15 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         const SizedBox(height: 32),
         FadeInUp(
           delay: const Duration(milliseconds: 400),
-          child: _buildSectionHeader('Popular Categories'),
+          child: _buildSectionHeader('Shop by Category'),
         ),
         const SizedBox(height: 12),
         FadeInUp(
           delay: const Duration(milliseconds: 500),
-          child: _buildCategoryGrid(all),
+          child: _buildCategoryGrid(categories),
         ),
+        const SizedBox(height: 24),
+        const AmazonDisclosure(),
       ],
     );
   }
@@ -318,8 +302,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     );
   }
 
-  Widget _buildCategoryGrid(List<Product> all) {
-    final categories = _popularCategoriesOf(all);
+  Widget _buildCategoryGrid(List<AmazonAffiliateCategory> categories) {
     final columns = AppResponsive.gridColumns(context, minItemWidth: 170)
         .clamp(2, 3)
         .toInt();
@@ -335,9 +318,9 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
       ),
       itemCount: categories.length,
       itemBuilder: (context, index) {
-        final category = categories[index].key;
+        final category = categories[index];
         return GestureDetector(
-          onTap: () => _applyQuery(category),
+          onTap: () => _selectCategory(category.name),
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             decoration: BoxDecoration(
@@ -347,10 +330,11 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
             ),
             child: Row(
               children: [
-                Icon(_categoryIcon(category), color: AppColors.primary),
+                Icon(_categoryIcon(category.imageKey),
+                    color: const Color(0xFFFF9900)),
                 const SizedBox(width: 12),
                 Flexible(
-                  child: Text(category,
+                  child: Text(category.name,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: AppTypography.bodyMedium
@@ -364,21 +348,42 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     );
   }
 
-  IconData _categoryIcon(String category) {
-    final c = category.toLowerCase();
-    if (c.contains('shoe') || c.contains('sneaker')) {
-      return Icons.directions_run_rounded;
+  IconData _categoryIcon(String imageKey) {
+    switch (imageKey) {
+      case 'gaming':
+        return Icons.sports_esports_rounded;
+      case 'gaming_pc':
+        return Icons.computer_rounded;
+      case 'laptop':
+        return Icons.laptop_windows_rounded;
+      case 'monitor':
+        return Icons.monitor_rounded;
+      case 'gpu':
+        return Icons.memory_rounded;
+      case 'keyboard':
+        return Icons.keyboard_rounded;
+      case 'mouse':
+        return Icons.mouse_rounded;
+      case 'headset':
+        return Icons.headset_rounded;
+      case 'mens-fashion':
+      case 'womens-fashion':
+        return Icons.checkroom_rounded;
+      case 'mens-shoes':
+      case 'womens-shoes':
+        return Icons.directions_run_rounded;
+      case 'beauty':
+        return Icons.brush_rounded;
+      case 'electronics':
+        return Icons.devices_rounded;
+      case 'home-kitchen':
+        return Icons.kitchen_rounded;
+      default:
+        return Icons.category_rounded;
     }
-    if (c.contains('watch')) return Icons.watch_rounded;
-    if (c.contains('cloth') || c.contains('shirt') || c.contains('apparel')) {
-      return Icons.checkroom_rounded;
-    }
-    if (c.contains('electronic')) return Icons.devices_rounded;
-    if (c.contains('accessor')) return Icons.shopping_bag_rounded;
-    return Icons.category_rounded;
   }
 
-  Widget _buildResults(List<Product> results) {
+  Widget _buildResults(List<AmazonProduct> results) {
     return ListView(
       physics: const BouncingScrollPhysics(),
       padding: const EdgeInsets.all(20),
@@ -386,19 +391,20 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text('${results.length} results', style: AppTypography.titleLarge),
-            if (_filters.isActive)
+            Text('${results.length} products',
+                style: AppTypography.titleLarge),
+            if (_selectedCategory != null || _query.trim().isNotEmpty)
               TextButton(
                 onPressed: _clearFilters,
-                child: Text('Clear Filters',
+                child: Text('Clear',
                     style: TextStyle(
                         color: AppColors.error.withValues(alpha: 0.8))),
               ),
           ],
         ),
-        if (_filters.isActive) ...[
+        if (_selectedCategory != null) ...[
           const SizedBox(height: 8),
-          _buildActiveFilterChips(),
+          _buildActiveCategoryChip(),
         ],
         const SizedBox(height: 16),
         if (results.isEmpty)
@@ -414,49 +420,27 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                       .toInt(),
               mainAxisSpacing: 12,
               crossAxisSpacing: 12,
-              childAspectRatio: AppResponsive.productCardRatio(context),
+              childAspectRatio: 0.58,
             ),
             itemCount: results.length,
             itemBuilder: (context, index) =>
-                PremiumProductCard(product: results[index]),
+                AmazonProductCard(amazonProduct: results[index]),
           ),
+        const SizedBox(height: 16),
+        const AmazonDisclosure(),
       ],
     );
   }
 
-  Widget _buildActiveFilterChips() {
+  Widget _buildActiveCategoryChip() {
     return Wrap(
       spacing: 8,
       runSpacing: 8,
       children: [
-        if (_filters.sort != 'Popularity')
-          InputChip(
-            label: Text(_filters.sort),
-            onDeleted: () => _updateFilters(ProductFilters(
-              priceRange: _filters.priceRange,
-              sort: 'Popularity',
-              brands: _filters.brands,
-            )),
-          ),
-        ..._filters.brands.map((b) => InputChip(
-              label: Text(b),
-              onDeleted: () => _updateFilters(ProductFilters(
-                priceRange: _filters.priceRange,
-                sort: _filters.sort,
-                brands: _filters.brands.where((x) => x != b).toList(),
-              )),
-            )),
-        if (_filters.priceRange.start != 0 ||
-            _filters.priceRange.end != _maxPrice)
-          InputChip(
-            label: Text(
-                '\$${_filters.priceRange.start.round()}-\$${_filters.priceRange.end.round()}'),
-            onDeleted: () => _updateFilters(ProductFilters(
-              priceRange: const RangeValues(0, _maxPrice),
-              sort: _filters.sort,
-              brands: _filters.brands,
-            )),
-          ),
+        InputChip(
+          label: Text(_selectedCategory!),
+          onDeleted: _clearFilters,
+        ),
       ],
     );
   }
@@ -471,10 +455,17 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           const SizedBox(height: 16),
           const Text('No products found', style: AppTypography.titleLarge),
           const SizedBox(height: 8),
-          Text('Try a different search term or adjust your filters.',
+          Text('Try a different search term or category.',
               textAlign: TextAlign.center,
               style: AppTypography.bodyMedium
                   .copyWith(color: AppColors.textSecondary)),
+          const SizedBox(height: 20),
+          OutlinedButton.icon(
+            onPressed: () => openExternalLink(
+                'https://www.amazon.com/s?k=${Uri.encodeQueryComponent(_query)}'),
+            icon: const Icon(Icons.open_in_new_rounded),
+            label: const Text('Search on Amazon'),
+          ),
         ],
       ),
     );

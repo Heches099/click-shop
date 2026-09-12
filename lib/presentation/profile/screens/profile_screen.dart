@@ -6,6 +6,7 @@ import '../../core/widgets/smart_image.dart';
 import '../../../domain/entities/user.dart';
 import '../../affiliate/providers/affiliate_provider.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../../home/providers/home_provider.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -73,32 +74,14 @@ class ProfileScreen extends ConsumerWidget {
         const SizedBox(height: 32),
         _buildMenuSection('Quick Access', [
           _MenuItem(
-            icon: Icons.receipt_long_outlined,
-            title: 'My Orders',
-            onTap: () => context.push('/orders'),
+            icon: Icons.bookmark_outline_rounded,
+            title: 'Saved for later',
+            onTap: () => ref.read(mainTabIndexProvider.notifier).state = 2,
           ),
           _MenuItem(
             icon: Icons.rocket_launch_rounded,
             title: 'Affiliate Program',
             onTap: () => context.push('/affiliate'),
-          ),
-          _MenuItem(
-            icon: Icons.favorite_border,
-            title: 'Wishlist',
-            onTap: () => context.push('/wishlist'),
-          ),
-        ]),
-        const SizedBox(height: 24),
-        _buildMenuSection('Account', [
-          _MenuItem(
-            icon: Icons.location_on_outlined,
-            title: 'Addresses',
-            onTap: () => context.push('/addresses'),
-          ),
-          _MenuItem(
-            icon: Icons.settings_outlined,
-            title: 'Settings',
-            onTap: () => context.push('/settings'),
           ),
         ]),
         const SizedBox(height: 32),

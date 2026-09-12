@@ -11,9 +11,11 @@ import '../../../core/utils/open_link.dart';
 import '../../../core/utils/responsive.dart';
 import '../../../core/widgets/affiliate_disclosure.dart';
 import '../../../core/widgets/google_ad_banner.dart';
+import '../../../domain/entities/amazon_product.dart';
 import '../../../domain/entities/product.dart';
 import '../../cart/providers/cart_provider.dart';
 import '../../home/providers/home_provider.dart';
+import '../../saved/providers/saved_provider.dart';
 
 class ProductDetailScreen extends ConsumerStatefulWidget {
   final Product product;
@@ -147,8 +149,8 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
             slivers: [
               _buildImageHeader(product),
               _buildProductInfo(product),
-              _buildSelectionSections(product),
-              _buildSpecifications(product),
+              if (!_isAmazon(product)) _buildSelectionSections(product),
+              if (!_isAmazon(product)) _buildSpecifications(product),
               const SliverToBoxAdapter(
                 child: Padding(
                   padding: EdgeInsets.symmetric(horizontal: 24, vertical: 8),
@@ -160,13 +162,23 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
             ],
           ),
           _buildBottomAction(product),
-          _buildTopBar(),
+          _buildTopBar(product),
         ],
       ),
     );
   }
 
-  Widget _buildTopBar() {
+  bool _isAmazon(Product product) {
+    final url = product.amazonUrl;
+    return url != null && url.isNotEmpty;
+  }
+
+  Widget _buildTopBar(Product product) {
+    final isAmazon = _isAmazon(product);
+    final saved =
+        ref.watch(savedProvider).asData?.value ?? const <AmazonProduct>[];
+    final isSaved = saved.any((p) => p.asin == product.asin);
+
     final topPadding = MediaQuery.viewPaddingOf(context).top;
     return Positioned(
       top: topPadding + 10,
@@ -180,14 +192,43 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                 Icons.arrow_back_ios_new_rounded, () => Navigator.pop(context)),
           ),
           FadeInRight(
-            child: _buildCircleButton(Icons.favorite_border_rounded, () {}),
+            child: _buildCircleButton(
+              isAmazon
+                  ? (isSaved
+                      ? Icons.bookmark_rounded
+                      : Icons.bookmark_border_rounded)
+                  : Icons.favorite_border_rounded,
+              isAmazon
+                  ? () {
+                      final amazonProduct = AmazonProduct(
+                        id: product.id,
+                        asin: product.asin ?? product.id,
+                        name: product.name,
+                        description: '',
+                        price: product.price,
+                        originalPrice: product.originalPrice,
+                        images: product.images,
+                        rating: product.rating,
+                        reviewCount: product.reviewCount,
+                        category: product.category,
+                        brand: product.brand,
+                        amazonUrl: product.amazonUrl ?? '',
+                      );
+                      ref.read(savedProvider.notifier).toggle(amazonProduct);
+                    }
+                  : () {},
+              color: isAmazon && isSaved
+                  ? const Color(0xFFFF9900)
+                  : AppColors.textPrimary,
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildCircleButton(IconData icon, VoidCallback onTap) {
+  Widget _buildCircleButton(IconData icon, VoidCallback onTap,
+      {Color? color}) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -197,7 +238,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
           shape: BoxShape.circle,
           boxShadow: AppShadows.soft,
         ),
-        child: Icon(icon, size: 20, color: AppColors.textPrimary),
+        child: Icon(icon, size: 20, color: color ?? AppColors.textPrimary),
       ),
     );
   }
@@ -288,31 +329,63 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
               const SizedBox(height: 12),
               Text(product.name, style: AppTypography.h1),
               const SizedBox(height: 16),
-              Row(
-                children: [
-                  Text('\$${product.price}',
-                      style:
-                          AppTypography.h1.copyWith(color: AppColors.primary)),
-                  const SizedBox(width: 12),
-                  if (product.hasDiscount)
-                    Text(
-                      '\$${product.originalPrice}',
-                      style: AppTypography.titleLarge.copyWith(
-                        color: AppColors.textHint,
-                        decoration: TextDecoration.lineThrough,
+              if (_isAmazon(product))
+                _buildAmazonPriceNote()
+              else ...[
+                Row(
+                  children: [
+                    Text('\$${product.price}',
+                        style: AppTypography.h1
+                            .copyWith(color: AppColors.primary)),
+                    const SizedBox(width: 12),
+                    if (product.hasDiscount)
+                      Text(
+                        '\$${product.originalPrice}',
+                        style: AppTypography.titleLarge.copyWith(
+                          color: AppColors.textHint,
+                          decoration: TextDecoration.lineThrough,
+                        ),
                       ),
-                    ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              const Text('Description', style: AppTypography.titleLarge),
-              const SizedBox(height: 8),
-              Text(product.description,
-                  style: AppTypography.bodyMedium
-                      .copyWith(color: AppColors.textSecondary, height: 1.5)),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                const Text('Description', style: AppTypography.titleLarge),
+                const SizedBox(height: 8),
+                Text(product.description,
+                    style: AppTypography.bodyMedium
+                        .copyWith(color: AppColors.textSecondary, height: 1.5)),
+              ],
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildAmazonPriceNote() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF1DC),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFFF9900).withValues(alpha: 0.4)),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.price_change_rounded,
+              color: Color(0xFFFF9900), size: 20),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              'Price & availability shown on Amazon (USD). Tap "Buy on Amazon" to view and order.',
+              style: AppTypography.bodyMedium.copyWith(
+                fontSize: 13,
+                color: AppColors.textPrimary,
+                height: 1.3,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -500,17 +573,32 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
           ),
           child: Row(
             children: [
-              Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('Total Price', style: AppTypography.labelMedium),
-                  Text('\$${product.price}',
-                      style: AppTypography.titleLarge
-                          .copyWith(color: AppColors.primary)),
-                ],
-              ),
-              const SizedBox(width: 24),
+              if (isAmazonProduct)
+                Expanded(
+                  child: Text(
+                    'Sold & fulfilled by Amazon',
+                    maxLines: 2,
+                    style: AppTypography.labelMedium.copyWith(
+                      color: AppColors.textSecondary,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                )
+              else ...[
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Total Price',
+                        style: AppTypography.labelMedium),
+                    Text('\$${product.price}',
+                        style: AppTypography.titleLarge
+                            .copyWith(color: AppColors.primary)),
+                  ],
+                ),
+                const SizedBox(width: 24),
+              ],
               Expanded(
                 child: isAmazonProduct
                     ? _buildAmazonBuyButton(product)

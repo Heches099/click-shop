@@ -5,8 +5,8 @@ import '../../../core/utils/responsive.dart';
 import '../../home/providers/home_provider.dart';
 import '../../home/screens/home_screen.dart';
 import '../../search/screens/search_screen.dart';
-import '../../cart/providers/cart_provider.dart';
-import '../../cart/screens/cart_screen.dart';
+import '../../saved/providers/saved_provider.dart';
+import '../../saved/screens/saved_screen.dart';
 import '../../profile/screens/profile_screen.dart';
 
 class MainScaffold extends ConsumerStatefulWidget {
@@ -20,14 +20,15 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> {
   final List<Widget> _pages = [
     const HomeScreen(),
     const SearchScreen(),
-    const CartScreen(),
+    const SavedScreen(),
     const ProfileScreen(),
   ];
 
   @override
   Widget build(BuildContext context) {
     final currentIndex = ref.watch(mainTabIndexProvider);
-    final cartCount = ref.watch(cartProvider).length;
+    final savedCount =
+        ref.watch(savedProvider).asData?.value.length ?? 0;
 
     return Scaffold(
       body: IndexedStack(
@@ -60,8 +61,8 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> {
                       currentIndex, 1, Icons.search_rounded, 'Search')),
               Expanded(
                   child: _buildNavItem(
-                      currentIndex, 2, Icons.shopping_bag_outlined, 'Bag',
-                      badgeCount: cartCount)),
+                      currentIndex, 2, Icons.bookmark_outline_rounded, 'Saved',
+                      badgeCount: savedCount)),
               Expanded(
                   child: _buildNavItem(
                       currentIndex, 3, Icons.person_outline_rounded, 'Profile')),

@@ -34,3 +34,14 @@ final amazonGamingProductsProvider =
     limit: 20,
   );
 });
+
+/// The full curated Amazon catalog (all categories) used by the Search tab.
+final amazonAllProductsProvider =
+    FutureProvider<List<AmazonProduct>>((ref) async {
+  final useCase = ref.watch(amazonUseCaseProvider);
+  return useCase.searchProducts(
+    query: '',
+    category: '',
+    limit: 50,
+  );
+});

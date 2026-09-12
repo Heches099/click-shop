@@ -4,10 +4,7 @@ import '../domain/entities/product.dart';
 import '../presentation/affiliate/screens/affiliate_portal_screen.dart';
 import '../presentation/auth/screens/login_screen.dart';
 import '../presentation/auth/screens/signup_screen.dart';
-import '../presentation/categories/screens/category_detail_screen.dart';
 import '../presentation/product/screens/product_detail_screen.dart';
-import '../presentation/orders/screens/order_list_screen.dart';
-import '../presentation/checkout/screens/checkout_screen.dart';
 import '../presentation/core/screens/main_scaffold.dart';
 import '../presentation/onboarding/screens/onboarding_screen.dart';
 
@@ -31,13 +28,6 @@ final router = GoRouter(
       builder: (context, state) => const MainScaffold(),
     ),
     GoRoute(
-      path: '/category/:slug',
-      builder: (context, state) {
-        final slug = state.pathParameters['slug'] ?? 'all';
-        return CategoryDetailScreen(slug: slug);
-      },
-    ),
-    GoRoute(
       path: '/product/:id',
       builder: (context, state) => _productDetail(state),
     ),
@@ -46,16 +36,8 @@ final router = GoRouter(
       builder: (context, state) => _productDetail(state),
     ),
     GoRoute(
-      path: '/orders',
-      builder: (context, state) => const OrderListScreen(),
-    ),
-    GoRoute(
       path: '/affiliate',
       builder: (context, state) => const AffiliatePortalScreen(),
-    ),
-    GoRoute(
-      path: '/checkout',
-      builder: (context, state) => const CheckoutScreen(),
     ),
   ],
 );
