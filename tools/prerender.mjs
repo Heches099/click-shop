@@ -298,6 +298,7 @@ function head({ title, description, canonical, robots = 'index, follow, max-imag
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <base href="/">
+  <meta name="google-site-verification" content="om6wtq_QAg9T6agjMo6fyHI6l9tKYxid3x2KZ7zqZmQ" />
   <title>${esc(title)}</title>
   <meta name="description" content="${esc(description)}">
   <meta name="robots" content="${esc(robots)}">
