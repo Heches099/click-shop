@@ -2,6 +2,7 @@ import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../config/design_tokens.dart';
+import '../../../core/services/seo/seo_service.dart';
 import '../../../core/utils/open_link.dart';
 import '../../../core/utils/responsive.dart';
 import '../../../core/widgets/amazon_disclosure.dart';
@@ -10,7 +11,10 @@ import '../../core/widgets/amazon_product_card.dart';
 import '../../home/providers/amazon_provider.dart';
 
 class SearchScreen extends ConsumerStatefulWidget {
-  const SearchScreen({super.key});
+  /// Optional query pre-filled from a `/search?q=...` deep link.
+  final String? initialQuery;
+
+  const SearchScreen({super.key, this.initialQuery});
 
   @override
   ConsumerState<SearchScreen> createState() => _SearchScreenState();
@@ -28,9 +32,30 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   String? _selectedCategory;
 
   @override
+  void initState() {
+    super.initState();
+    final initial = widget.initialQuery?.trim();
+    if (initial != null && initial.isNotEmpty) {
+      _query = initial;
+      _searchController.text = initial;
+    }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Static result pages are transient — keep them out of the index.
+    SeoService.instance.setPageMeta(robots: _showResults ? 'noindex, follow' : '');
+  }
+
+  @override
   void dispose() {
     _searchController.dispose();
     super.dispose();
+  }
+
+  void _syncRobots() {
+    SeoService.instance.setPageMeta(robots: _showResults ? 'noindex, follow' : '');
   }
 
   bool get _showResults =>
@@ -61,6 +86,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         _history = [trimmed, ..._history].take(8).toList();
       }
     });
+    _syncRobots();
   }
 
   void _clearSearch() {
@@ -68,6 +94,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
       _searchController.clear();
       _query = '';
     });
+    _syncRobots();
   }
 
   void _clearFilters() {
@@ -75,16 +102,18 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
       _query = '';
       _selectedCategory = null;
     });
+    _syncRobots();
   }
 
-  void _selectCategory(String? category) {
-    final normalized = category?.toLowerCase();
+  void _selectCategory(String? categoryId) {
+    final normalized = categoryId?.toLowerCase();
     setState(() {
       _selectedCategory =
           (normalized == null || normalized == 'all' || normalized.isEmpty)
               ? null
-              : category;
+              : categoryId;
     });
+    _syncRobots();
   }
 
   @override
@@ -194,19 +223,19 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 20),
         children: [
-          _buildChip('All', _selectedCategory == null),
+          _buildChip('All', null, _selectedCategory == null),
           ...categories
-              .map((c) => _buildChip(c.name, _selectedCategory == c.name)),
+              .map((c) => _buildChip(c.name, c.id, _selectedCategory == c.id)),
         ],
       ),
     );
   }
 
-  Widget _buildChip(String label, bool isSelected) {
+  Widget _buildChip(String label, String? id, bool isSelected) {
     return Padding(
       padding: const EdgeInsets.only(right: 8),
       child: GestureDetector(
-        onTap: () => _selectCategory(isSelected ? null : label),
+        onTap: () => _selectCategory(isSelected ? null : id),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
           padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -320,7 +349,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
       itemBuilder: (context, index) {
         final category = categories[index];
         return GestureDetector(
-          onTap: () => _selectCategory(category.name),
+          onTap: () => _selectCategory(category.id),
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             decoration: BoxDecoration(
@@ -433,12 +462,19 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   }
 
   Widget _buildActiveCategoryChip() {
+    final categories =
+        ref.watch(amazonAffiliateCategoriesProvider).value ?? const [];
+    final label = categories
+            .where((c) => c.id == _selectedCategory)
+            .firstOrNull
+            ?.name ??
+        _selectedCategory!;
     return Wrap(
       spacing: 8,
       runSpacing: 8,
       children: [
         InputChip(
-          label: Text(_selectedCategory!),
+          label: Text(label),
           onDeleted: _clearFilters,
         ),
       ],

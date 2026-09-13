@@ -48,6 +48,9 @@ class AmazonAffiliateCategory {
 class AmazonProduct {
   final String id;
   final String asin;
+
+  /// Stable SEO slug (backend-owned) used for canonical product URLs.
+  final String slug;
   final String name;
   final String description;
   final double price;
@@ -62,6 +65,7 @@ class AmazonProduct {
   const AmazonProduct({
     required this.id,
     required this.asin,
+    this.slug = '',
     required this.name,
     this.description = '',
     required this.price,
@@ -78,6 +82,7 @@ class AmazonProduct {
   /// [PremiumProductCard] and [ProductDetailScreen] without modification.
   Product toProduct() => Product(
         id: id,
+        slug: slug.isEmpty ? null : slug,
         name: name,
         description: description.isNotEmpty ? name : description,
         price: price,
@@ -96,6 +101,7 @@ class AmazonProduct {
     return AmazonProduct(
       id: json['id'] as String? ?? '',
       asin: json['asin'] as String? ?? '',
+      slug: json['slug'] as String? ?? '',
       name: json['name'] as String? ?? '',
       description: json['description'] as String? ?? '',
       price: (json['price'] as num?)?.toDouble() ?? 0.0,

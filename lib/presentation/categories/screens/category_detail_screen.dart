@@ -4,15 +4,18 @@ import 'package:go_router/go_router.dart';
 import '../../../config/design_tokens.dart';
 import '../../../core/services/seo/seo_service.dart';
 import '../../../core/utils/responsive.dart';
+import '../../../domain/entities/amazon_product.dart';
 import '../../../domain/entities/product.dart';
+import '../../home/providers/amazon_provider.dart';
 import '../../home/providers/home_provider.dart';
 import '../../home/widgets/product_card.dart';
 
 /// SEO-friendly, deep-linkable category page served at `/category/:slug`.
 ///
 /// The [slug] mirrors the category id (or name) and is used to filter the
-/// product catalog. Because it uses clean declarative routing the page can be
-/// refreshed, shared and indexed directly by search crawlers.
+/// product catalog (database products plus the curated Amazon catalog, which
+/// share the same slug convention). Because it uses clean declarative routing
+/// the page can be refreshed, shared and indexed directly by search crawlers.
 class CategoryDetailScreen extends ConsumerWidget {
   final String slug;
 
@@ -20,63 +23,72 @@ class CategoryDetailScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final productsAsync = ref.watch(allProductsProvider);
+    final dbAsync = ref.watch(allProductsProvider);
+    final amazonAsync = ref.watch(amazonAllProductsProvider);
+    final dbProducts = dbAsync.value ?? const <Product>[];
+    final amazonProducts = amazonAsync.value ?? const <AmazonProduct>[];
+    final all = [
+      ...dbProducts,
+      ...amazonProducts.map((a) => a.toProduct()),
+    ];
+    final loading = dbAsync.isLoading && amazonAsync.isLoading;
+    final failed = dbAsync.hasError &&
+        amazonAsync.hasError &&
+        dbProducts.isEmpty &&
+        amazonProducts.isEmpty;
+
+    if (failed) {
+      return _buildScaffold(
+        context,
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.all(32),
+            child: Column(
+              children: [
+                const Icon(Icons.cloud_off_rounded,
+                    size: 48, color: AppColors.border),
+                const SizedBox(height: 12),
+                const Text('Unable to load products',
+                    style: AppTypography.titleLarge),
+                const SizedBox(height: 8),
+                Text(
+                  'Check your connection and try again.',
+                  textAlign: TextAlign.center,
+                  style: AppTypography.bodyMedium
+                      .copyWith(color: AppColors.textSecondary),
+                ),
+                const SizedBox(height: 16),
+                OutlinedButton.icon(
+                  onPressed: () {
+                    ref.invalidate(allProductsProvider);
+                    ref.invalidate(amazonAllProductsProvider);
+                  },
+                  icon: const Icon(Icons.refresh_rounded),
+                  label: const Text('Retry'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    final filtered = _filterProducts(all);
+    _syncSeoMeta(context, filtered);
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: productsAsync.when(
-        data: (products) {
-          final filtered = _filterProducts(products);
-          _syncSeoMeta(context, ref, filtered);
-          return CustomScrollView(
-            physics: const BouncingScrollPhysics(),
-            slivers: [
-              _buildAppBar(context, filtered),
-              _buildProductGrid(context, filtered),
-              const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.xxl)),
-            ],
-          );
-        },
-        loading: () => _buildScaffold(
-          context,
-          const SliverToBoxAdapter(
-            child: Padding(
-              padding: EdgeInsets.symmetric(vertical: 80),
-              child: Center(child: CircularProgressIndicator()),
+      body: loading
+          ? const Center(child: CircularProgressIndicator())
+          : CustomScrollView(
+              physics: const BouncingScrollPhysics(),
+              slivers: [
+                _buildAppBar(context, filtered),
+                _buildProductGrid(context, filtered),
+                const SliverToBoxAdapter(
+                    child: SizedBox(height: AppSpacing.xxl)),
+              ],
             ),
-          ),
-        ),
-        error: (error, _) => _buildScaffold(
-          context,
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.all(32),
-              child: Column(
-                children: [
-                  const Icon(Icons.cloud_off_rounded,
-                      size: 48, color: AppColors.border),
-                  const SizedBox(height: 12),
-                  const Text('Unable to load products',
-                      style: AppTypography.titleLarge),
-                  const SizedBox(height: 8),
-                  Text(
-                    '$error',
-                    textAlign: TextAlign.center,
-                    style: AppTypography.bodyMedium
-                        .copyWith(color: AppColors.textSecondary),
-                  ),
-                  const SizedBox(height: 16),
-                  OutlinedButton.icon(
-                    onPressed: () => ref.invalidate(allProductsProvider),
-                    icon: const Icon(Icons.refresh_rounded),
-                    label: const Text('Retry'),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
     );
   }
 
@@ -155,18 +167,35 @@ class CategoryDetailScreen extends ConsumerWidget {
     }).toList();
   }
 
-  void _syncSeoMeta(BuildContext context, WidgetRef ref, List<Product> products) {
+  void _syncSeoMeta(BuildContext context, List<Product> products) {
+    final title = _titleCase(slug);
+    final sampleNames = products
+        .take(4)
+        .map((p) => p.name)
+        .where((n) => n.isNotEmpty)
+        .join(', ');
+    final description = products.isEmpty
+        ? 'Explore $title at ClickShop — curated picks with the best prices.'
+        : 'Shop top $title picks at ClickShop: $sampleNames.';
+    final canonicalPath = '/category/$slug';
     SeoService.instance.setPageMeta(
-      title: '${_titleCase(slug)} — ClickShop',
-      description:
-          'Shop the best ${_titleCase(slug)} at ClickShop. '
-          '${products.length} hand-picked items with fast delivery and great prices.',
-      canonicalPath: '/category/$slug',
+      title: '$title — ClickShop',
+      description: description.length > 220
+          ? description.substring(0, 220)
+          : description,
+      canonicalPath: canonicalPath,
+      robots: 'index, follow',
+      ogImage: products.isNotEmpty ? products.first.firstImage : null,
+      ogType: 'website',
     );
     if (products.isNotEmpty) {
       SeoService.instance.injectCollectionPage(
-          products, canonicalPath: '/category/$slug');
+          products, canonicalPath: canonicalPath);
     }
+    SeoService.instance.injectBreadcrumbSchema([
+      (name: 'Home', path: '/'),
+      (name: title, path: canonicalPath),
+    ]);
   }
 
   String _titleCase(String value) {

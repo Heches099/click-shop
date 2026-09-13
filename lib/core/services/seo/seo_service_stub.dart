@@ -6,11 +6,20 @@ import 'dart:async';
 
 import '../../../domain/entities/product.dart';
 
-void setPageMeta({String? title, String? description, String? canonicalPath}) {}
+void setPageMeta({
+  String? title,
+  String? description,
+  String? canonicalPath,
+  String? robots,
+  String? ogImage,
+  String? ogType,
+}) {}
 
 bool injectJsonLd(Map<String, dynamic> json, {String id = 'default'}) => false;
 
 void clearJsonLd(String id) {}
+
+void injectBreadcrumbSchema(List<({String name, String path})> crumbs) {}
 
 void injectProductSchema(Product product, {String? canonicalPath}) {}
 

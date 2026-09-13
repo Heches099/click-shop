@@ -50,6 +50,7 @@ class ProductOut(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
     id: str
+    slug: str = ""
     name: str
     description: str
     price: float

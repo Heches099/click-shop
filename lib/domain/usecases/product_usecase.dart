@@ -11,6 +11,8 @@ class ProductUseCase {
 
   Future<Product> getProductById(String id) => repository.getProductById(id);
 
+  Future<Product> getProductBySlug(String slug) => repository.getProductBySlug(slug);
+
   Future<List<Product>> getProductsByCategory(String categoryId) =>
       repository.getProductsByCategory(categoryId);
 

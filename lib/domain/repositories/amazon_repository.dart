@@ -12,4 +12,6 @@ abstract class AmazonRepository {
   });
 
   Future<AmazonProduct?> getProductByAsin(String asin);
+
+  Future<AmazonProduct?> getProductBySlug(String slug);
 }

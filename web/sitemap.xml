@@ -1,128 +1,218 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://clickshop.example.com/</loc>
+    <loc>https://click-shop-d62ad.web.app/</loc>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://clickshop.example.com/category/all</loc>
+    <loc>https://click-shop-d62ad.web.app/category/all</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://clickshop.example.com/category/sneakers</loc>
+    <loc>https://click-shop-d62ad.web.app/category/beauty</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://clickshop.example.com/category/fashion</loc>
+    <loc>https://click-shop-d62ad.web.app/category/electronics</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://clickshop.example.com/category/electronics</loc>
+    <loc>https://click-shop-d62ad.web.app/category/fashion</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://clickshop.example.com/category/beauty</loc>
+    <loc>https://click-shop-d62ad.web.app/category/gaming</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://clickshop.example.com/category/home</loc>
+    <loc>https://click-shop-d62ad.web.app/category/gaming-headsets</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://clickshop.example.com/products/9db4e08d-14cc-4a46-a007-3592ae1f81dc</loc>
+    <loc>https://click-shop-d62ad.web.app/category/gaming-keyboards</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://click-shop-d62ad.web.app/category/gaming-laptops</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://click-shop-d62ad.web.app/category/gaming-monitors</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://click-shop-d62ad.web.app/category/gaming-mouse</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://click-shop-d62ad.web.app/category/gaming-pcs</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://click-shop-d62ad.web.app/category/graphics-cards</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://click-shop-d62ad.web.app/category/home</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://click-shop-d62ad.web.app/category/home-kitchen</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://click-shop-d62ad.web.app/category/mens-fashion</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://click-shop-d62ad.web.app/category/mens-shoes</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://click-shop-d62ad.web.app/category/sneakers</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://click-shop-d62ad.web.app/category/womens-fashion</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://click-shop-d62ad.web.app/category/womens-shoes</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://click-shop-d62ad.web.app/product/3e3aa3f0-7389-49cb-ba60-7b135b602a75</loc>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://clickshop.example.com/products/5cc76944-f250-4a08-96e0-f1cc2255bccf</loc>
+    <loc>https://click-shop-d62ad.web.app/product/5710bb23-7497-4b32-866a-56666f7bbc71</loc>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://clickshop.example.com/products/9afd417d-879b-45fe-93df-2ad7508a9223</loc>
+    <loc>https://click-shop-d62ad.web.app/product/94414150-fb54-442e-a747-aa2439d282bc</loc>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://clickshop.example.com/products/57a5d88c-c53e-460f-a089-297b0edf59c1</loc>
+    <loc>https://click-shop-d62ad.web.app/product/04a57799-7d48-46be-b5f9-7147fab4d368</loc>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://clickshop.example.com/products/208c29ce-367f-4b0f-93c0-5970e6e48e0a</loc>
+    <loc>https://click-shop-d62ad.web.app/product/54ccd856-5d43-4520-be66-13737892a5f9</loc>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://clickshop.example.com/products/21ebea14-6b72-4586-806b-dec470701859</loc>
+    <loc>https://click-shop-d62ad.web.app/product/87a8bb9b-2bb9-44a5-8f3e-bca13ef7aea3</loc>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://clickshop.example.com/products/7067ce1a-75d8-4ed3-8a91-b3c5e2735f74</loc>
+    <loc>https://click-shop-d62ad.web.app/product/83b7bb1e-2783-49d4-9afa-dee28248670b</loc>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://clickshop.example.com/products/241dc035-68d2-4282-807c-b8128345c15c</loc>
+    <loc>https://click-shop-d62ad.web.app/product/25f438d3-617e-4a9c-af93-02858797c23e</loc>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://clickshop.example.com/products/a2f5bb27-4f95-49f8-ad0f-61ce01b613ef</loc>
+    <loc>https://click-shop-d62ad.web.app/product/5c59317d-c4fe-48f2-afa2-00661dfb9bb7</loc>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://clickshop.example.com/products/545b5799-b55b-40ce-ad6a-7b06e61b071f</loc>
+    <loc>https://click-shop-d62ad.web.app/product/f88fa970-0591-4979-be01-283b0f28347e</loc>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://clickshop.example.com/products/fa5b7119-9922-438a-b2aa-6989cbd76d39</loc>
+    <loc>https://click-shop-d62ad.web.app/product/b0c37a3f-6fb4-4705-85ec-98f63f9cac5f</loc>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://clickshop.example.com/products/bfef9bf9-4978-4483-b7b9-480f93c71ca9</loc>
+    <loc>https://click-shop-d62ad.web.app/product/90c38c7e-c265-4647-980b-9901b606d93a</loc>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://clickshop.example.com/products/db89709a-efd5-445a-a4c6-f5766d45b62c</loc>
+    <loc>https://click-shop-d62ad.web.app/product/89d75a72-d321-43aa-8e6a-6fab0e9cacd2</loc>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://clickshop.example.com/products/9840b275-2f45-4296-b0d6-c499148450d8</loc>
+    <loc>https://click-shop-d62ad.web.app/product/8da9684f-c3f4-41df-9b3a-60ebb6cfb412</loc>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://clickshop.example.com/products/fe83b265-4805-4098-a6af-8f0a0bbcd2a6</loc>
+    <loc>https://click-shop-d62ad.web.app/product/3183af17-bb5d-4c5a-b56d-1c5871bd8443</loc>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://clickshop.example.com/products/c9ad409e-2bc3-4f01-ac6f-e0b2f5ae4762</loc>
+    <loc>https://click-shop-d62ad.web.app/product/408200c8-c9ed-453b-9e8f-c37b4bd3810d</loc>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://clickshop.example.com/products/8a476a66-cf80-49ff-ae16-034e73a5b970</loc>
+    <loc>https://click-shop-d62ad.web.app/product/840b6f65-d6f4-403e-a9f7-05e144981ff7</loc>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://clickshop.example.com/products/3b11ace5-248e-4b68-82c5-3ba869f87727</loc>
+    <loc>https://click-shop-d62ad.web.app/product/2f00a1df-838b-47b6-984a-e86ea7163df5</loc>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://click-shop-d62ad.web.app/guides/how-to-choose-a-gaming-laptop</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://click-shop-d62ad.web.app/guides/budget-gaming-setup-guide</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://click-shop-d62ad.web.app/guides/everyday-tech-and-home-essentials</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://click-shop-d62ad.web.app/compare/gaming-laptop-vs-gaming-pc</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://click-shop-d62ad.web.app/compare/levis-501-vs-polo-classic-fit</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
   </url>
 </urlset>

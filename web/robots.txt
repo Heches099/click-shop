@@ -25,4 +25,4 @@ Disallow: /checkout
 Disallow: /orders
 Disallow: /affiliate
 
-Sitemap: https://clickshop.example.com/sitemap.xml
+Sitemap: https://click-shop-d62ad.web.app/sitemap.xml

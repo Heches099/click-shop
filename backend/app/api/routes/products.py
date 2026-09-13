@@ -102,6 +102,19 @@ async def list_products(
     return Paginated[ProductOut](items=items, total=total, page=page, page_size=page_size)
 
 
+@router.get("/by-slug/{slug}", response_model=ProductOut)
+async def get_product_by_slug(slug: str, db: AsyncSession = Depends(get_db)):
+    """Public lookup by stable SEO slug (used by the app's product pages)."""
+    product = await db.scalar(
+        select(Product)
+        .options(selectinload(Product.category))
+        .where(Product.slug == slug)
+    )
+    if product is None or not product.is_active:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Product not found")
+    return product_out(product)
+
+
 @router.get("/{product_id}", response_model=ProductOut)
 async def get_product(product_id: str, db: AsyncSession = Depends(get_db)):
     product = await db.scalar(

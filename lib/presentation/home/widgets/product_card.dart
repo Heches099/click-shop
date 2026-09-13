@@ -19,7 +19,7 @@ class PremiumProductCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return AnimatedPress(
-      onPressed: () => context.push('/product/${product.id}', extra: product),
+      onPressed: () => context.push('/product/${product.slugOrId}', extra: product),
       child: Container(
         decoration: BoxDecoration(
           color: AppColors.surface,

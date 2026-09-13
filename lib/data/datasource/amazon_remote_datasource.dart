@@ -24,6 +24,9 @@ abstract class AmazonRemoteDataSource {
 
   /// Fetch a single Amazon product by ASIN.
   Future<AmazonProduct?> getProductByAsin(String asin);
+
+  /// Fetch a single curated Amazon product by its stable SEO slug.
+  Future<AmazonProduct?> getProductBySlug(String slug);
 }
 
 class AmazonRemoteDataSourceImpl implements AmazonRemoteDataSource {
@@ -66,6 +69,20 @@ class AmazonRemoteDataSourceImpl implements AmazonRemoteDataSource {
   Future<AmazonProduct?> getProductByAsin(String asin) async {
     try {
       final response = await dioClient.dio.get('/amazon/products/$asin');
+      final data = response.data;
+      if (data is Map<String, dynamic>) {
+        return AmazonProduct.fromJson(data);
+      }
+      return null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  @override
+  Future<AmazonProduct?> getProductBySlug(String slug) async {
+    try {
+      final response = await dioClient.dio.get('/amazon/products/by-slug/$slug');
       final data = response.data;
       if (data is Map<String, dynamic>) {
         return AmazonProduct.fromJson(data);

@@ -4,6 +4,7 @@ import '../entities/category.dart';
 abstract class ProductRepository {
   Future<List<Product>> getProducts();
   Future<Product> getProductById(String id);
+  Future<Product> getProductBySlug(String slug);
   Future<List<Product>> getProductsByCategory(String categoryId);
   Future<List<Product>> getFeaturedProducts();
   Future<List<CategoryEntity>> getCategories();

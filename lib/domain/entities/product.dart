@@ -1,5 +1,9 @@
 class Product {
   final String id;
+
+  /// Stable, human-readable SEO slug (from the backend). When empty the app
+  /// falls back to [id] so navigation never breaks for legacy data.
+  final String? slug;
   final String name;
   final String description;
   final double price;
@@ -22,6 +26,7 @@ class Product {
 
   const Product({
     required this.id,
+    this.slug,
     required this.name,
     required this.description,
     required this.price,
@@ -38,6 +43,9 @@ class Product {
     this.asin,
     this.amazonUrl,
   });
+
+  /// Canonical URL slug — falls back to the raw id for legacy products.
+  String get slugOrId => (slug != null && slug!.isNotEmpty) ? slug! : id;
 
   String get firstImage => images.isNotEmpty ? images.first : '';
   

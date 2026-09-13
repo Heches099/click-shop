@@ -15,6 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$ProductModel {
   String get id;
+  String get slug;
   String get name;
   String get description;
   double get price;
@@ -46,6 +47,7 @@ mixin _$ProductModel {
         (other.runtimeType == runtimeType &&
             other is ProductModel &&
             (identical(other.id, id) || other.id == id) &&
+            (identical(other.slug, slug) || other.slug == slug) &&
             (identical(other.name, name) || other.name == name) &&
             (identical(other.description, description) ||
                 other.description == description) &&
@@ -71,6 +73,7 @@ mixin _$ProductModel {
   int get hashCode => Object.hash(
       runtimeType,
       id,
+      slug,
       name,
       description,
       price,
@@ -87,7 +90,7 @@ mixin _$ProductModel {
 
   @override
   String toString() {
-    return 'ProductModel(id: $id, name: $name, description: $description, price: $price, originalPrice: $originalPrice, images: $images, rating: $rating, reviewCount: $reviewCount, category: $category, stock: $stock, brand: $brand, specifications: $specifications, colors: $colors, sizes: $sizes)';
+    return 'ProductModel(id: $id, slug: $slug, name: $name, description: $description, price: $price, originalPrice: $originalPrice, images: $images, rating: $rating, reviewCount: $reviewCount, category: $category, stock: $stock, brand: $brand, specifications: $specifications, colors: $colors, sizes: $sizes)';
   }
 }
 
@@ -99,6 +102,7 @@ abstract mixin class $ProductModelCopyWith<$Res> {
   @useResult
   $Res call(
       {String id,
+      String slug,
       String name,
       String description,
       double price,
@@ -127,6 +131,7 @@ class _$ProductModelCopyWithImpl<$Res> implements $ProductModelCopyWith<$Res> {
   @override
   $Res call({
     Object? id = null,
+    Object? slug = null,
     Object? name = null,
     Object? description = null,
     Object? price = null,
@@ -145,6 +150,10 @@ class _$ProductModelCopyWithImpl<$Res> implements $ProductModelCopyWith<$Res> {
       id: null == id
           ? _self.id
           : id // ignore: cast_nullable_to_non_nullable
+              as String,
+      slug: null == slug
+          ? _self.slug
+          : slug // ignore: cast_nullable_to_non_nullable
               as String,
       name: null == name
           ? _self.name
@@ -297,6 +306,7 @@ extension ProductModelPatterns on ProductModel {
   TResult maybeWhen<TResult extends Object?>(
     TResult Function(
             String id,
+            String slug,
             String name,
             String description,
             double price,
@@ -318,6 +328,7 @@ extension ProductModelPatterns on ProductModel {
       case _ProductModel() when $default != null:
         return $default(
             _that.id,
+            _that.slug,
             _that.name,
             _that.description,
             _that.price,
@@ -353,6 +364,7 @@ extension ProductModelPatterns on ProductModel {
   TResult when<TResult extends Object?>(
     TResult Function(
             String id,
+            String slug,
             String name,
             String description,
             double price,
@@ -373,6 +385,7 @@ extension ProductModelPatterns on ProductModel {
       case _ProductModel():
         return $default(
             _that.id,
+            _that.slug,
             _that.name,
             _that.description,
             _that.price,
@@ -407,6 +420,7 @@ extension ProductModelPatterns on ProductModel {
   TResult? whenOrNull<TResult extends Object?>(
     TResult? Function(
             String id,
+            String slug,
             String name,
             String description,
             double price,
@@ -427,6 +441,7 @@ extension ProductModelPatterns on ProductModel {
       case _ProductModel() when $default != null:
         return $default(
             _that.id,
+            _that.slug,
             _that.name,
             _that.description,
             _that.price,
@@ -451,6 +466,7 @@ extension ProductModelPatterns on ProductModel {
 class _ProductModel implements ProductModel {
   const _ProductModel(
       {required this.id,
+      this.slug = '',
       required this.name,
       required this.description,
       required this.price,
@@ -473,6 +489,9 @@ class _ProductModel implements ProductModel {
 
   @override
   final String id;
+  @override
+  @JsonKey()
+  final String slug;
   @override
   final String name;
   @override
@@ -547,6 +566,7 @@ class _ProductModel implements ProductModel {
         (other.runtimeType == runtimeType &&
             other is _ProductModel &&
             (identical(other.id, id) || other.id == id) &&
+            (identical(other.slug, slug) || other.slug == slug) &&
             (identical(other.name, name) || other.name == name) &&
             (identical(other.description, description) ||
                 other.description == description) &&
@@ -572,6 +592,7 @@ class _ProductModel implements ProductModel {
   int get hashCode => Object.hash(
       runtimeType,
       id,
+      slug,
       name,
       description,
       price,
@@ -588,7 +609,7 @@ class _ProductModel implements ProductModel {
 
   @override
   String toString() {
-    return 'ProductModel(id: $id, name: $name, description: $description, price: $price, originalPrice: $originalPrice, images: $images, rating: $rating, reviewCount: $reviewCount, category: $category, stock: $stock, brand: $brand, specifications: $specifications, colors: $colors, sizes: $sizes)';
+    return 'ProductModel(id: $id, slug: $slug, name: $name, description: $description, price: $price, originalPrice: $originalPrice, images: $images, rating: $rating, reviewCount: $reviewCount, category: $category, stock: $stock, brand: $brand, specifications: $specifications, colors: $colors, sizes: $sizes)';
   }
 }
 
@@ -602,6 +623,7 @@ abstract mixin class _$ProductModelCopyWith<$Res>
   @useResult
   $Res call(
       {String id,
+      String slug,
       String name,
       String description,
       double price,
@@ -631,6 +653,7 @@ class __$ProductModelCopyWithImpl<$Res>
   @pragma('vm:prefer-inline')
   $Res call({
     Object? id = null,
+    Object? slug = null,
     Object? name = null,
     Object? description = null,
     Object? price = null,
@@ -649,6 +672,10 @@ class __$ProductModelCopyWithImpl<$Res>
       id: null == id
           ? _self.id
           : id // ignore: cast_nullable_to_non_nullable
+              as String,
+      slug: null == slug
+          ? _self.slug
+          : slug // ignore: cast_nullable_to_non_nullable
               as String,
       name: null == name
           ? _self.name

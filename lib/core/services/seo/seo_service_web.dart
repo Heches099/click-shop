@@ -10,11 +10,14 @@ import 'package:web/web.dart' as web;
 import '../../constants/app_constants.dart';
 import '../../../domain/entities/product.dart';
 
-/// Updates `<title>`, meta description, canonical and Open Graph tags.
+/// Updates `<title>`, meta description, canonical, Open Graph and robots tags.
 void setPageMeta({
   String? title,
   String? description,
   String? canonicalPath,
+  String? robots,
+  String? ogImage,
+  String? ogType,
 }) {
   final doc = web.document;
   final url = '${AppConstants.storeBaseUrl}$canonicalPath';
@@ -34,6 +37,43 @@ void setPageMeta({
     _setMeta('og:url', url, property: true);
     _setMeta('twitter:url', url);
   }
+  if (robots != null && robots.isNotEmpty) {
+    if (robots.trim().isEmpty) {
+      doc.querySelector('meta[name="robots"]')?.remove();
+    } else {
+      _setMeta('robots', robots);
+    }
+  }
+  if (ogImage != null && ogImage.isNotEmpty && ogImage.startsWith('http')) {
+    _setMeta('og:image', ogImage, property: true);
+    _setMeta('twitter:image', ogImage);
+    _setMeta('og:image:alt', title ?? _pageTitle(), property: true);
+  }
+  if (ogType != null && ogType.isNotEmpty) {
+    _setMeta('og:type', ogType, property: true);
+  }
+}
+
+String _pageTitle() => web.document.title;
+
+/// Adds a schema.org/BreadcrumbList JSON-LD document. [crumbs] are (name,
+/// path) pairs ordered from the site root to the current page.
+void injectBreadcrumbSchema(List<({String name, String path})> crumbs) {
+  if (crumbs.isEmpty) return;
+  final items = <Map<String, dynamic>>[];
+  for (final (index, crumb) in crumbs.indexed) {
+    items.add({
+      '@type': 'ListItem',
+      'position': index + 1,
+      'name': crumb.name,
+      'item': '${AppConstants.storeBaseUrl}${crumb.path}',
+    });
+  }
+  injectJsonLd({
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    'itemListElement': items,
+  }, id: 'breadcrumb');
 }
 
 /// Appends (or replaces) a JSON-LD script in `<head>` tagged by [id].
@@ -57,7 +97,7 @@ void clearJsonLd(String id) {
 
 /// schema.org/Product JSON-LD for an individual product page.
 void injectProductSchema(Product product, {String? canonicalPath}) {
-  final canonical = canonicalPath ?? '/products/${product.id}';
+  final canonical = canonicalPath ?? '/product/${product.slugOrId}';
   final url = '${AppConstants.storeBaseUrl}$canonical';
 
   final schema = <String, dynamic>{
@@ -126,7 +166,7 @@ void injectCollectionPage(List<Product> products, {String? canonicalPath}) {
             '@type': 'ListItem',
             'position': index + 1,
             'name': product.name,
-            'url': '${AppConstants.storeBaseUrl}/products/${product.id}',
+            'url': '${AppConstants.storeBaseUrl}/product/${product.slugOrId}',
             'image': product.firstImage,
           },
       ],

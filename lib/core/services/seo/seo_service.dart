@@ -13,13 +13,30 @@ class SeoService {
   static final SeoService instance = SeoService._();
 
   /// Set the document `<title>`, meta description, canonical URL and Open
-  /// Graph / Twitter social tags. No-ops on native platforms.
+  /// Graph / Twitter social tags. [robots] overrides the robots meta directive
+  /// (e.g. `noindex, follow`); [ogImage] sets og:image / twitter:image;
+  /// [ogType] sets og:type (e.g. `product`). No-ops on native platforms.
   void setPageMeta({
     String? title,
     String? description,
     String? canonicalPath,
+    String? robots,
+    String? ogImage,
+    String? ogType,
   }) =>
-      impl.setPageMeta(title: title, description: description, canonicalPath: canonicalPath);
+      impl.setPageMeta(
+        title: title,
+        description: description,
+        canonicalPath: canonicalPath,
+        robots: robots,
+        ogImage: ogImage,
+        ogType: ogType,
+      );
+
+  /// Injects a schema.org/BreadcrumbList JSON-LD. [crumbs] are (label, path)
+  /// pairs from home to the current page. No-ops on native platforms.
+  void injectBreadcrumbSchema(List<({String name, String path})> crumbs) =>
+      impl.injectBreadcrumbSchema(crumbs);
 
   /// Injects a raw JSON-LD object into `<head>`, replacing any previous script
   /// carrying the same [id]. Returns true when the tag was written.

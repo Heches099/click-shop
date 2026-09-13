@@ -32,4 +32,8 @@ class AmazonUseCase {
   Future<AmazonProduct?> getProductByAsin(String asin) {
     return repository.getProductByAsin(asin);
   }
+
+  Future<AmazonProduct?> getProductBySlug(String slug) {
+    return repository.getProductBySlug(slug);
+  }
 }

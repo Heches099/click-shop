@@ -20,7 +20,7 @@ class AmazonProductCard extends ConsumerWidget {
     final product = amazonProduct.toProduct();
 
     return GestureDetector(
-      onTap: () => context.push('/product/${product.id}', extra: product),
+      onTap: () => context.push('/product/${product.slugOrId}', extra: product),
       child: Container(
         decoration: BoxDecoration(
           color: AppColors.surface,

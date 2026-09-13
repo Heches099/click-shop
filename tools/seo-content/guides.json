@@ -1,0 +1,98 @@
+[
+  {
+    "slug": "how-to-choose-a-gaming-laptop",
+    "title": "How to Choose a Gaming Laptop",
+    "description": "A practical buying guide for gaming laptops: understanding GPUs, refresh rates, storage and RAM before you buy.",
+    "category": "gaming-laptops",
+    "featuredAsins": ["B0DW1X5YCQ"],
+    "relatedCategories": ["gaming-monitors", "graphics-cards"],
+    "relatedGuides": ["budget-gaming-setup-guide"],
+    "sections": [
+      {
+        "heading": "Start with the GPU, not the brand",
+        "paragraphs": [
+          "For gaming laptops the graphics card decides how many frames you get and at what visual quality. Look for a dedicated GPU rather than integrated graphics if you plan to play modern titles.",
+          "As an example, the ASUS ROG Strix G16 ships with an NVIDIA GeForce RTX 5070 Ti, which pairs well with high-refresh QHD panels in current-generation games."
+        ]
+      },
+      {
+        "heading": "Refresh rate matters more than you think",
+        "paragraphs": [
+          "A high-refresh display makes motion feel smoother and can help in fast competitive games. The ROG Strix G16 above uses a 240Hz ROG Nebula panel, meaning it can display up to 240 distinct frames per second when the GPU can deliver them.",
+          "If you mostly play single-player titles, a 144–180Hz panel is already a big upgrade over a standard laptop screen."
+        ]
+      },
+      {
+        "heading": "RAM, storage, and CPU",
+        "paragraphs": [
+          "16GB of RAM is a comfortable baseline for gaming plus background apps; 32GB gives more headroom for streaming and creative work.",
+          "An NVMe SSD speeds up game loading. Many 2025/2026 laptops, including the Strix G16 with its 1TB SSD, also pair high-end CPUs like the Intel Core Ultra 9 275HX with the GPU so the system keeps up during demanding scenes."
+        ]
+      },
+      {
+        "heading": "Desktop vs laptop",
+        "paragraphs": [
+          "If portability is not important, a prebuilt gaming desktop often delivers comparable performance for the same budget, with easier upgrades later. Compare a laptop and a desktop side-by-side or browse prebuilt gaming PCs.",
+          "Whatever you choose, keep accessories in mind: a quality monitor, keyboard and mouse complete the setup."
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "budget-gaming-setup-guide",
+    "title": "Building a Budget Gaming Setup",
+    "description": "A step-by-step look at putting together a desktop or laptop gaming setup — monitor, keyboard, mouse and tower — without wasting your budget.",
+    "category": "gaming-pcs",
+    "featuredAsins": ["B0GLV9PML4", "B07G11G2X8", "B07QKC4WWD", "B0CVPHDLTD"],
+    "relatedCategories": ["gaming-monitors", "gaming-keyboards", "gaming-mouse", "graphics-cards"],
+    "relatedGuides": ["how-to-choose-a-gaming-laptop"],
+    "sections": [
+      {
+        "heading": "Plan around one centerpiece",
+        "paragraphs": [
+          "Start with the part that costs the most — usually the PC itself or the monitor — and build everything else around it.",
+          "A prebuilt gaming desktop such as the iBUYPOWER tower with an AMD Ryzen 5 5500 and RTX 3050 is a common entry point for 1080p gaming and streaming."
+        ]
+      },
+      {
+        "heading": "Don't overspend on your first monitor",
+        "paragraphs": [
+          "A 1440p 180Hz panel like the Samsung Odyssey G5 (G51F) hits a strong balance of clarity and smoothness, and includes adaptive sync for stutter-free play.",
+          "Pairing the monitor with a wired mechanical keyboard and an accurate wireless mouse adds precision without a large price tag."
+        ]
+      },
+      {
+        "heading": "Add performance where it counts",
+        "paragraphs": [
+          "If a tower feels underpowered later, an aftermarket mid-range GPU such as the ASUS Dual RTX 4060 Ti EVO is a realistic upgrade path for 1080p high-refresh gaming.",
+          "Budget first, upgrade second — a stable base setup beats a single expensive part every time."
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "everyday-tech-and-home-essentials",
+    "title": "Everyday Tech and Home Essentials Worth Owning",
+    "description": "Practical picks for everyday life — wireless earbuds, e-readers, streaming, skincare and cooking — and why they pull their weight daily.",
+    "category": "electronics",
+    "featuredAsins": ["B0BDHWDR12", "B08KTZ8249", "B08C1W5N87", "B00FLYWNYQ", "B00TTD9BRC"],
+    "relatedCategories": ["home-kitchen", "beauty"],
+    "relatedGuides": [],
+    "sections": [
+      {
+        "heading": "The devices you actually reach for",
+        "paragraphs": [
+          "Everyday tech is about frequency, not prestige. Items like the Apple AirPods Pro (2nd gen), an Amazon Kindle Paperwhite, or an Amazon Fire TV Stick get used near-daily, so their fit in your routine determines their real value.",
+          "An e-reader with a warm-light display and weeks of battery life changes how many books you finish; a streaming stick turns any TV into a smart TV in a minute."
+        ]
+      },
+      {
+        "heading": "High-use home and care products",
+        "paragraphs": [
+          "In the kitchen, a 7-in-1 pressure cooker like the Instant Pot Duo 6 Qt consolidates several appliances into one countertop unit.",
+          "For daily care, a dependable moisturizer such as CeraVe Moisturizing Cream is a staple for dry skin — simple, fragrance-free and hard to get wrong."
+        ]
+      }
+    ]
+  }
+]

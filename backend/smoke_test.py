@@ -44,6 +44,15 @@ for ep in ["featured", "best-sellers", "new-arrivals", "flash-sales", "recommend
         check(f"products/{ep} shape", all(k in p for k in need), f"{p.keys()}")
 pid = client.get("/v1/products/featured").json()[0]["id"]
 r = client.get(f"/v1/products/{pid}"); check("product by id", r.status_code == 200 and r.json()["id"] == pid)
+slug = client.get("/v1/products/featured").json()[0]["slug"]
+r = client.get(f"/v1/products/by-slug/{slug}")
+check("product by slug", r.status_code == 200 and r.json()["slug"] == slug, r.text[:120])
+r = client.get("/v1/products/by-slug/not-a-real-slug"); check("product by-slug 404", r.status_code == 404)
+featured_amazon = client.get("/v1/amazon/products?limit=1").json()
+az_slug = (featured_amazon[0]["slug"] if featured_amazon else "")
+r = client.get(f"/v1/amazon/products/by-slug/{az_slug}")
+check("amazon product by slug", r.status_code == 200 and r.json()["slug"] == az_slug, r.text[:120])
+r = client.get("/v1/amazon/products/by-slug/zzz-not-real"); check("amazon by-slug 404", r.status_code == 404)
 r = client.get("/v1/products?category=sneakers"); check("products by category", r.status_code == 200 and r.json()["total"] > 0)
 r = client.get("/v1/products/search?q=hoodie"); check("search", r.status_code == 200 and len(r.json()) >= 1, r.text[:120])
 

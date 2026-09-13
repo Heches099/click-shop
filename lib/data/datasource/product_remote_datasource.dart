@@ -9,6 +9,7 @@ abstract class ProductRemoteDataSource {
   Future<List<ProductModel>> getFlashSales();
   Future<List<ProductModel>> getRecommended();
   Future<ProductModel> getProductById(String id);
+  Future<ProductModel> getProductBySlug(String slug);
   Future<List<CategoryModel>> getCategories();
 }
 
@@ -39,6 +40,12 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
   @override
   Future<ProductModel> getProductById(String id) async {
     final response = await dioClient.dio.get('/products/$id');
+    return ProductModel.fromJson(_asObject(response.data));
+  }
+
+  @override
+  Future<ProductModel> getProductBySlug(String slug) async {
+    final response = await dioClient.dio.get('/products/by-slug/$slug');
     return ProductModel.fromJson(_asObject(response.data));
   }
 

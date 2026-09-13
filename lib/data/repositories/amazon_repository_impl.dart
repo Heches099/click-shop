@@ -36,4 +36,9 @@ class AmazonRepositoryImpl implements AmazonRepository {
   Future<AmazonProduct?> getProductByAsin(String asin) {
     return remoteDataSource.getProductByAsin(asin);
   }
+
+  @override
+  Future<AmazonProduct?> getProductBySlug(String slug) {
+    return remoteDataSource.getProductBySlug(slug);
+  }
 }

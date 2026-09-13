@@ -157,7 +157,7 @@ class SavedScreen extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             GestureDetector(
-              onTap: () => context.push('/product/${product.toProduct().id}',
+              onTap: () => context.push('/product/${product.toProduct().slugOrId}',
                   extra: product.toProduct()),
               child: product.images.isNotEmpty
                   ? SmartImage(
@@ -202,7 +202,7 @@ class SavedScreen extends ConsumerWidget {
                   ),
                   GestureDetector(
                     onTap: () =>
-                        context.push('/product/${product.toProduct().id}',
+                        context.push('/product/${product.toProduct().slugOrId}',
                             extra: product.toProduct()),
                     child: Text(
                       product.name,

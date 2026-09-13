@@ -4,6 +4,7 @@ import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../config/design_tokens.dart';
 import '../../../core/services/ads/ad_config.dart';
 import '../../../core/services/seo/seo_service.dart';
@@ -16,6 +17,7 @@ import '../../../domain/entities/product.dart';
 import '../../cart/providers/cart_provider.dart';
 import '../../home/providers/home_provider.dart';
 import '../../saved/providers/saved_provider.dart';
+import '../../home/providers/amazon_provider.dart';
 
 class ProductDetailScreen extends ConsumerStatefulWidget {
   final Product product;
@@ -58,10 +60,28 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
   Future<void> _hydrateProduct() async {
     setState(() => _loading = true);
     try {
-      final product = await ref
-          .read(productUseCaseProvider)
-          .getProductById(widget.product.id);
+      final product = await _resolveProduct(widget.product.id);
       if (!mounted) return;
+      if (product == null) {
+        setState(() {
+          _loadError =
+              'This product is no longer available or the link is incorrect.';
+          _loading = false;
+        });
+        SeoService.instance.setPageMeta(
+          title: 'Product Not Found | ClickShop',
+          robots: 'noindex, follow',
+        );
+        return;
+      }
+      // Redirect legacy /products/:id and /product/:uuid URLs to the clean
+      // slug canonical so the address bar always shows the SEO URL.
+      final currentPath = GoRouterState.of(context).uri.path;
+      final canonicalPath = '/product/${product.slugOrId}';
+      if (currentPath != canonicalPath) {
+        context.go(canonicalPath, extra: product);
+        return;
+      }
       setState(() {
         _loadedProduct = product;
         _loading = false;
@@ -76,18 +96,63 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
     }
   }
 
+  /// Resolves the URL key to a [Product]: tries the database slug, the
+  /// database id (legacy UUID links), then the curated Amazon catalog by slug,
+  /// then by ASIN (legacy `amazon-<asin>` links).
+  Future<Product?> _resolveProduct(String key) async {
+    final productUseCase = ref.read(productUseCaseProvider);
+    final amazonUseCase = ref.read(amazonUseCaseProvider);
+
+    try {
+      return await productUseCase.getProductBySlug(key);
+    } catch (_) {}
+    try {
+      return await productUseCase.getProductById(key);
+    } catch (_) {}
+    try {
+      final amazon = await amazonUseCase.getProductBySlug(key);
+      if (amazon != null) return amazon.toProduct();
+    } catch (_) {}
+    if (key.startsWith('amazon-')) {
+      try {
+        final amazon = await amazonUseCase
+            .getProductByAsin(key.substring('amazon-'.length));
+        if (amazon != null) return amazon.toProduct();
+      } catch (_) {}
+    }
+    return null;
+  }
+
   /// E-E-A-T / structured data: every product page injects a JSON-LD
-  /// Product schema and per-page title/description into `<head>`.
+  /// Product schema, breadcrumbs and per-page title/description into `<head>`.
   void _syncSeo(Product product) {
-    final canonicalPath = '/products/${product.id}';
+    final canonicalPath = '/product/${product.slugOrId}';
+    final brand = product.brand.isNotEmpty ? ' — ${product.brand}' : '';
+    final description = product.description.isEmpty
+        ? 'View latest deals, pricing and availability for ${product.name} at ClickShop.'
+        : product.description;
+    final metaDescription = product.price > 0
+        ? 'Buy ${product.name} for \$${product.price}. $description'
+        : description;
     SeoService.instance.setPageMeta(
-      title: '${product.name} — ${product.brand} | ClickShop',
-      description:
-          'Buy ${product.name} for \$${product.price}. '
-          '${product.description.length > 140 ? product.description.substring(0, 140) : product.description}',
+      title: '${product.name}$brand | ClickShop',
+      description: metaDescription.length > 220
+          ? metaDescription.substring(0, 220)
+          : metaDescription,
       canonicalPath: canonicalPath,
+      robots: 'index, follow',
+      ogImage: product.firstImage,
+      ogType: 'product',
     );
-    SeoService.instance.injectProductSchema(product, canonicalPath: canonicalPath);
+    SeoService.instance.injectProductSchema(product,
+        canonicalPath: canonicalPath);
+    final crumbs = <({String name, String path})>[
+      (name: 'Home', path: '/'),
+      if (product.category.isNotEmpty)
+        (name: product.category, path: '/category/${product.category}'),
+      (name: product.name, path: canonicalPath),
+    ];
+    SeoService.instance.injectBreadcrumbSchema(crumbs);
   }
 
   @override

@@ -40,6 +40,26 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/amazon", tags=["amazon"])
 
 
+def _slugify(text: str) -> str:
+    """Return a URL-safe slug (lowercase, hyphens). Ampersands etc. are dropped."""
+    normalized = text.lower()
+    parts = [c for c in normalized if c.isalnum() or c in " -_"]
+    slug = "-".join(part for part in "".join(parts).split() if part)
+    return slug or "product"
+
+
+def _product_slug(product: AmazonProduct) -> str:
+    """Deterministic, stable slug for a curated product.
+
+    Base is the human-readable title slug (keyword friendly). When that base
+    already maps to a different product we append the last 6 characters of the
+    ASIN so the slug stays unique and reviewable. The backend computes it, so
+    the prerenderer and the Flutter app always agree.
+    """
+    base = _slugify(product.title)
+    return f"{base}-{product.asin[-6:].lower()}"
+
+
 def _category_to_out(category: AffiliateCategory) -> dict:
     """Serialize a category + its server-built affiliate URL."""
     return {
@@ -60,6 +80,7 @@ def _product_to_out(product: AmazonProduct, category: str) -> dict:
     """
     return {
         "id": f"amazon-{product.asin}",
+        "slug": _product_slug(product),
         "name": product.title,
         "description": product.title,
         "price": product.price,
@@ -114,7 +135,25 @@ async def get_amazon_products(
         logger.error("Amazon product search failed.")
         return []
 
-    return [_product_to_out(p, category.strip() or "gaming") for p in products]
+    return [_product_to_out(p, category.strip() or p.category) for p in products]
+
+
+@router.get("/products/by-slug/{slug}")
+async def get_amazon_product_by_slug(slug: str) -> dict:
+    """Resolve a stable product slug to a curated Amazon product.
+
+    Used by the product detail page when a slug URL is opened directly.
+    Returns 404 when the slug does not match any curated product.
+    """
+    provider: AffiliateProvider = get_amazon_provider()
+    products = await provider.search_products(query="", category="", item_count=100)
+    for product in products:
+        if _product_slug(product) == slug.strip().lower():
+            return _product_to_out(product, product.category)
+    raise HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND,
+        detail="Amazon product not found",
+    )
 
 
 @router.get("/products/{asin}")
