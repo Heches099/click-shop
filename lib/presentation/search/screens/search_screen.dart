@@ -2,12 +2,14 @@ import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../config/design_tokens.dart';
+import '../../../core/constants/amazon_affiliate.dart';
 import '../../../core/services/seo/seo_service.dart';
 import '../../../core/utils/open_link.dart';
 import '../../../core/utils/responsive.dart';
 import '../../../core/widgets/amazon_disclosure.dart';
 import '../../../domain/entities/amazon_product.dart';
 import '../../core/widgets/amazon_product_card.dart';
+import '../../core/widgets/smart_image.dart';
 import '../../home/providers/amazon_provider.dart';
 
 class SearchScreen extends ConsumerStatefulWidget {
@@ -343,31 +345,57 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         crossAxisCount: columns,
         mainAxisSpacing: 12,
         crossAxisSpacing: 12,
-        childAspectRatio: 2.5,
+        childAspectRatio: 1.25,
       ),
       itemCount: categories.length,
       itemBuilder: (context, index) {
         final category = categories[index];
+        final assetPath = kAmazonCategoryAssets[category.imageKey];
         return GestureDetector(
           onTap: () => _selectCategory(category.id),
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            clipBehavior: Clip.antiAlias,
             decoration: BoxDecoration(
               color: AppColors.surface,
               borderRadius: BorderRadius.circular(16),
               boxShadow: AppShadows.soft,
             ),
-            child: Row(
+            child: Stack(
+              fit: StackFit.expand,
               children: [
-                Icon(_categoryIcon(category.imageKey),
-                    color: const Color(0xFFFF9900)),
-                const SizedBox(width: 12),
-                Flexible(
-                  child: Text(category.name,
+                if (assetPath != null)
+                  SmartImage(imagePath: assetPath, fit: BoxFit.cover)
+                else
+                  Container(
+                    color: const Color(0xFFF5F5F5),
+                    alignment: Alignment.center,
+                    child: Icon(_categoryIcon(category.imageKey),
+                        size: 44, color: const Color(0xFFFF9900)),
+                  ),
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [Colors.transparent, Colors.black54],
+                      ),
+                    ),
+                    child: Text(
+                      category.name,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: AppTypography.bodyMedium
-                          .copyWith(fontWeight: FontWeight.bold)),
+                      style: AppTypography.bodyMedium.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
                 ),
               ],
             ),
