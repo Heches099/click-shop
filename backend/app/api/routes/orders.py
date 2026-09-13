@@ -49,11 +49,18 @@ async def create_order(
         )
     )
     product_map = {p.id: p for p in products}
+
+    # Aggregate duplicate product lines so a single request cannot bypass the
+    # stock check (or overcharge) by repeating the same product_id.
+    quantities: dict[str, int] = {}
     for line in payload.items:
-        if line.product_id not in product_map:
-            raise HTTPException(status_code=400, detail=f"Product {line.product_id} not available")
-        if product_map[line.product_id].stock < line.quantity:
-            raise HTTPException(status_code=400, detail=f"Not enough stock for {product_map[line.product_id].name}")
+        quantities[line.product_id] = quantities.get(line.product_id, 0) + line.quantity
+    for product_id, total_qty in quantities.items():
+        product = product_map.get(product_id)
+        if product is None:
+            raise HTTPException(status_code=400, detail=f"Product {product_id} not available")
+        if product.stock < total_qty:
+            raise HTTPException(status_code=400, detail=f"Not enough stock for {product.name}")
 
     subtotal = 0.0
     order_items: list[OrderItem] = []
@@ -131,11 +138,10 @@ async def create_order(
             )
         )
 
-    # Decrement stock.
-    for product in product_map.values():
-        product.stock = max(0, product.stock - next(
-            (i.quantity for i in payload.items if i.product_id == product.id), 0
-        ))
+    # Decrement stock (once per product, using the aggregated quantity).
+    for product_id, total_qty in quantities.items():
+        product = product_map[product_id]
+        product.stock = max(0, product.stock - total_qty)
 
     # Affiliate commission on checkout with a referral code.
     if payload.ref_code and payload.ref_code.strip():

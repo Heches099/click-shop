@@ -1,15 +1,5 @@
 rules_version = '2';
 
-// ClickShop Firestore security rules.
-//
-// Scope: block anonymous/wildcard tampering while keeping the current
-// client-side affiliate attribution flow functional.
-//
-// Known limitation (flagged in code): clicks/sales attribution still does
-// client-side increments on affiliate docs, so signed-in users can inflate
-// their own totals. Moving attribution to a Cloud Function (server-side
-// writes) is the recommended hardening follow-up.
-
 service cloud.firestore {
   match /databases/{database}/documents {
     function signedIn() {
@@ -17,12 +7,12 @@ service cloud.firestore {
     }
 
     // --- Affiliate accounts ---
-    // Reads are required for promo-code lookup during click/sale attribution.
-    // Users may only create their own account document, and no one may delete.
+    // Read/write is scoped to the owning user. Anyone can create their own
+    // account; only the owner can update it; no one may delete.
     match /affiliates/{userId} {
-      allow read: if signedIn();
+      allow read: if signedIn() && request.auth.uid == userId;
       allow create: if signedIn() && request.auth.uid == userId;
-      allow update: if signedIn();
+      allow update: if signedIn() && request.auth.uid == userId;
       allow delete: if false;
     }
 
@@ -30,16 +20,19 @@ service cloud.firestore {
     // Public funnel: appending a click never requires an account. Read/update/
     // delete are closed so logs cannot be inspected or tampered with.
     match /clicks/{clickId} {
-      allow create: if true;
+      allow create: if true
+        && request.resource.data.keys().hasAll(['affiliateCode']);
       allow read, update, delete: if false;
     }
 
     // --- Commissions ---
-    // Creators can only read/update their own commissions; writes require
-    // sign-in and deletion is closed.
+    // Creation is checked against the creator's own uid and the referenced
+    // affiliate id must be the creator's own, so users cannot mint
+    // commissions for other affiliates. Read/update are owner-only.
     match /commissions/{commissionId} {
       allow read: if signedIn() && resource.data.affiliateId == request.auth.uid;
-      allow create: if signedIn();
+      allow create: if signedIn()
+        && request.resource.data.affiliateId == request.auth.uid;
       allow update: if signedIn() && resource.data.affiliateId == request.auth.uid;
       allow delete: if false;
     }

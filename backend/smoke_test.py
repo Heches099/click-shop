@@ -6,6 +6,7 @@ os.environ["DATABASE_URL"] = "sqlite+aiosqlite:///./smoke.db"
 
 from fastapi.testclient import TestClient  # noqa: E402
 
+from app.core.config import settings  # noqa: E402
 from app.db.seed import seed  # noqa: E402
 from app.main import app  # noqa: E402
 
@@ -101,7 +102,7 @@ r = client.get("/v1/affiliate/stats", headers=h); check("affiliate stats", r.sta
 r = client.get("/v1/affiliate/commissions", headers=h); check("affiliate commissions", r.status_code == 200)
 
 # --- admin ---
-r = client.post("/v1/auth/login", json={"email": "admin@clickshop.com", "password": "ChangeMe123!"})
+r = client.post("/v1/auth/login", json={"email": settings.admin_email, "password": settings.admin_password})
 check("admin login", r.status_code == 200, r.text[:200])
 ah = {"Authorization": f"Bearer {r.json()['access_token']}"}
 r = client.get("/v1/admin/stats", headers=ah); check("admin stats", r.status_code == 200 and "revenue" in r.json(), r.text[:200])

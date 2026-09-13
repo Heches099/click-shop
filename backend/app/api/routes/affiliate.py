@@ -1,11 +1,12 @@
 import secrets
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user
 from app.core.database import get_db
+from app.core.ratelimit import rate_limit
 from app.models import AffiliateAccount, AffiliateClick, AffiliateCommission, Payout, User
 from app.schemas.affiliate import (
     AffiliateAccountCreate,
@@ -120,7 +121,12 @@ async def commissions(user: User = Depends(get_current_user), db: AsyncSession =
 
 
 @router.post("/clicks", response_model=AffiliateClickOut, status_code=201)
-async def record_click(payload: AffiliateClickCreate, db: AsyncSession = Depends(get_db)):
+async def record_click(
+    payload: AffiliateClickCreate,
+    request: Request,
+    _: None = Depends(rate_limit(limit=20, window_seconds=300)),
+    db: AsyncSession = Depends(get_db),
+):
     account = await db.scalar(select(AffiliateAccount).where(AffiliateAccount.promo_code == payload.code.strip()))
     if account is None:
         raise HTTPException(status_code=404, detail="Unknown referral code")

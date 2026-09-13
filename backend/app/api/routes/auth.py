@@ -1,9 +1,10 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user
 from app.core.database import get_db
+from app.core.ratelimit import rate_limit
 from app.core.security import create_access_token, hash_password, verify_password
 from app.models import User
 from app.schemas.auth import (
@@ -13,7 +14,12 @@ from app.schemas.auth import (
     TokenResponse,
     UserOut,
 )
-from app.services.auth_service import AuthServiceError, get_or_create_user_by_email, verify_firebase_id_token
+from app.services.auth_service import (
+    AuthServiceError,
+    get_or_create_user_by_email,
+    normalize_email,
+    verify_firebase_id_token,
+)
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -23,11 +29,17 @@ def _token_response(user: User) -> TokenResponse:
 
 
 @router.post("/register", response_model=TokenResponse, status_code=status.HTTP_201_CREATED)
-async def register(payload: RegisterRequest, db: AsyncSession = Depends(get_db)):
-    existing = await db.scalar(select(User).where(User.email == payload.email))
+async def register(
+    payload: RegisterRequest,
+    request: Request,
+    _: None = Depends(rate_limit(limit=5, window_seconds=600)),
+    db: AsyncSession = Depends(get_db),
+):
+    email = normalize_email(payload.email)
+    existing = await db.scalar(select(User).where(User.email == email))
     if existing:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Email already registered")
-    user = User(email=payload.email, hashed_password=hash_password(payload.password), name=payload.name)
+    user = User(email=email, hashed_password=hash_password(payload.password), name=payload.name)
     db.add(user)
     await db.commit()
     await db.refresh(user)
@@ -35,15 +47,26 @@ async def register(payload: RegisterRequest, db: AsyncSession = Depends(get_db))
 
 
 @router.post("/login", response_model=TokenResponse)
-async def login(payload: LoginRequest, db: AsyncSession = Depends(get_db)):
-    user = await db.scalar(select(User).where(User.email == payload.email))
+async def login(
+    payload: LoginRequest,
+    request: Request,
+    _: None = Depends(rate_limit(limit=10, window_seconds=300)),
+    db: AsyncSession = Depends(get_db),
+):
+    email = normalize_email(payload.email)
+    user = await db.scalar(select(User).where(User.email == email))
     if user is None or not verify_password(payload.password, user.hashed_password):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password")
     return _token_response(user)
 
 
 @router.post("/firebase", response_model=TokenResponse)
-async def firebase_login(payload: FirebaseLoginRequest, db: AsyncSession = Depends(get_db)):
+async def firebase_login(
+    payload: FirebaseLoginRequest,
+    request: Request,
+    _: None = Depends(rate_limit(limit=10, window_seconds=300)),
+    db: AsyncSession = Depends(get_db),
+):
     """Exchange a Firebase/Google ID token (from the app's Firebase Auth) for an API JWT."""
     try:
         info = await verify_firebase_id_token(payload.id_token)

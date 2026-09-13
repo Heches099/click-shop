@@ -108,7 +108,7 @@ async def seed() -> None:
 
     await engine.dispose()
     print("Seed complete.")
-    print(f"Admin: {settings.admin_email} / {settings.admin_password}")
+    print(f"Admin account: {settings.admin_email}")
 
 
 if __name__ == "__main__":

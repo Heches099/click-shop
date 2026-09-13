@@ -9,6 +9,10 @@ class Settings(BaseSettings):
     app_name: str = "ClickShop API"
     api_v1_prefix: str = "/v1"
 
+    # Enable ONLY for local development. When False, API docs (/docs, /redoc,
+    # /openapi.json) are disabled to reduce information disclosure.
+    debug: bool = False
+
     database_url: str = "postgresql+asyncpg://clickshop:clickshop@localhost:5432/clickshop"
 
     jwt_secret: str = "change-me"
@@ -20,6 +24,10 @@ class Settings(BaseSettings):
 
     stripe_secret_key: str = ""
     stripe_webhook_secret: str = ""
+
+    # Public Firebase Web API key used to verify Firebase ID tokens against
+    # this project (accounts:lookup). Not a secret — it ships in the client.
+    firebase_web_api_key: str = ""
 
     cors_origins: str = "http://localhost:8080,http://localhost:3000"
 

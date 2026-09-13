@@ -9,9 +9,11 @@ app = FastAPI(
     title=settings.app_name,
     version="1.0.0",
     description="Backend API for the ClickShop Flutter e-commerce app.",
-    docs_url="/docs",
-    redoc_url="/redoc",
-    openapi_url="/openapi.json",
+    # API docs are a useful development surface but disclose the full router
+    # schema publicly. They are disabled outside of local debug mode.
+    docs_url="/docs" if settings.debug else None,
+    redoc_url="/redoc" if settings.debug else None,
+    openapi_url="/openapi.json" if settings.debug else None,
 )
 
 if settings.jwt_secret == "change-me":

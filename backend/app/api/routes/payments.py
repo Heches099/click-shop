@@ -48,30 +48,47 @@ async def create_payment_intent(
 
 @router.post("/webhook")
 async def stripe_webhook(request: Request, db: AsyncSession = Depends(get_db)):
-    """Stripe webhook: marks orders paid on payment_intent.succeeded."""
+    """Stripe webhook: marks orders paid on payment_intent.succeeded.
+
+    Security: the event is only processed when a webhook signing secret is
+    configured and the `stripe-signature` header verifies. An unsigned or
+    missing signature is rejected — an unauthenticated payload is never
+    trusted even in development.
+    """
     import stripe
 
     stripe.api_key = settings.stripe_secret_key
-    payload = await request.body()
+
+    if not settings.stripe_webhook_secret:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Webhooks are not enabled on this instance",
+        )
+
     sig_header = request.headers.get("stripe-signature")
+    if not sig_header:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Missing stripe-signature header")
 
-    if settings.stripe_webhook_secret and sig_header:
-        try:
-            event = stripe.Webhook.construct_event(payload, sig_header, settings.stripe_webhook_secret)
-        except (ValueError, stripe.error.SignatureVerificationError):
-            raise HTTPException(status_code=400, detail="Invalid signature")
-    else:
-        import json
-
-        event = json.loads(payload)
+    payload = await request.body()
+    try:
+        event = stripe.Webhook.construct_event(payload, sig_header, settings.stripe_webhook_secret)
+    except (ValueError, stripe.error.SignatureVerificationError):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid signature") from None
 
     if event["type"] == "payment_intent.succeeded":
         intent = event["data"]["object"]
         order_id = intent.get("metadata", {}).get("order_id")
-        if order_id:
-            order = await db.scalar(select(Order).where(Order.id == order_id))
-            if order and order.status == "pending":
-                order.status = "paid"
-                order.payment_id = intent["id"]
-                await db.commit()
+        if not order_id:
+            return {"received": True}
+        order = await db.scalar(select(Order).where(Order.id == order_id))
+        if order is None or order.status != "pending":
+            return {"received": True}
+        # Defense in depth: the amount in the event must match the order total.
+        expected_cents = int(round(order.total * 100))
+        actual_cents = int(intent.get("amount") or 0)
+        if actual_cents != expected_cents:
+            return {"received": True}
+        order.status = "paid"
+        order.payment_id = intent["id"]
+        await db.commit()
     return {"received": True}
