@@ -35,19 +35,28 @@ class Auth extends _$Auth {
 
   /// Merges the backend /auth/me profile (the only trusted source of the
   /// owner flag) over the Firebase-local user. Non-fatal if unavailable.
+  /// Retries a few times because the API JWT exchange right after sign-in is
+  /// async and a cold backend can take longer than the bounded first attempt.
   Future<void> _syncProfile(AppUser? local, int epoch) async {
     if (local == null) return;
-    try {
-      final refreshed = await sl<RefreshProfileUseCase>()();
+    for (var attempt = 0; attempt < 3; attempt++) {
       if (epoch != _epoch) return;
-      refreshed.fold(
-        (_) {},
-        (apiUser) {
-          if (apiUser != null) state = AsyncValue.data(apiUser);
-        },
-      );
-    } catch (_) {
-      // Profile sync is best-effort; keep the local user.
+      try {
+        final refreshed = await sl<RefreshProfileUseCase>()();
+        if (epoch != _epoch) return;
+        final done = refreshed.fold(
+          (_) => false,
+          (apiUser) {
+            if (apiUser != null) state = AsyncValue.data(apiUser);
+            return apiUser != null;
+          },
+        );
+        if (done) return;
+      } catch (_) {
+        // Best-effort sync; keep retrying.
+      }
+      if (epoch != _epoch) return;
+      await Future<void>.delayed(const Duration(seconds: 2));
     }
   }
 

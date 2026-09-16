@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:google_sign_in/google_sign_in.dart';
 import '../../core/network/dio_client.dart';
 import '../../core/network/token_storage.dart';
@@ -57,6 +58,16 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
   @override
   Future<UserModel> signInWithGoogle() async {
+    if (kIsWeb) {
+      // google_sign_in's `authenticate()` is NOT supported on web — it throws
+      // UnimplementedError silently. Use Firebase's popup flow instead, which
+      // is the supported web path for Google sign-in.
+      final provider = GoogleAuthProvider();
+      provider.addScope('email');
+      provider.addScope('profile');
+      final userCredential = await _firebaseAuth.signInWithPopup(provider);
+      return _fromUser(userCredential.user!);
+    }
     final account = await _googleSignIn.authenticate();
     final googleAuth = account.authentication;
     final credential = GoogleAuthProvider.credential(
@@ -78,10 +89,17 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       // Firebase sign-out failure is non-fatal: a null `currentUser` is what
       // the rest of the app relies on, and the local token is already gone.
     }
+    if (kIsWeb) {
+      // Never touch the Google plugin on web: it is never initialized there,
+      // so calling signOut() awaits an init future that never resolves and
+      // hangs logout forever. Firebase sign-out above fully clears the web
+      // session (including a Google one).
+      return;
+    }
     try {
       await _googleSignIn.signOut();
     } catch (_) {
-      // Google sign-out is best-effort; nothing depends on it remining on web.
+      // Google sign-out is best-effort; nothing depends on it on mobile.
     }
   }
 
@@ -129,29 +147,27 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   @override
   Future<void> clearApiToken() => _tokenStorage.clear();
 
-  UserModel _fromUser(User user) {
-    // Exchange the fresh Firebase ID token for a ClickShop API JWT so the
-    // authenticated endpoints (orders, payments, profile) work immediately.
-    _exchangeToken(user);
+  Future<UserModel> _fromUser(User user) async {
+    // Await the JWT exchange before exposing the user: the API session token
+    // must be in place so the very next /auth/me (the ONLY source of the owner
+    // flag) returns correctly. Bounded so a cold/slow backend can't stall the
+    // sign-in UI for too long; a later exchange retry will catch up.
+    try {
+      final idToken = await user.getIdToken();
+      if (idToken != null) {
+        await _exchangeFirebaseToken(idToken)
+            .timeout(const Duration(seconds: 10));
+      }
+    } catch (_) {
+      // A failed exchange is non-fatal — the user is still signed in with
+      // Firebase for auth, and the next successful exchange will retry.
+    }
     return UserModel(
       id: user.uid,
       email: user.email!,
       name: user.displayName,
       photoUrl: user.photoURL,
     );
-  }
-
-  void _exchangeToken(User user) {
-    () async {
-      try {
-        final idToken = await user.getIdToken();
-        if (idToken == null) return;
-        await _exchangeFirebaseToken(idToken);
-      } catch (_) {
-        // A failed exchange is non-fatal — the user is still signed in with
-        // Firebase for auth, and the next successful exchange will retry.
-      }
-    }();
   }
 
   Future<void> _exchangeFirebaseToken(String idToken) async {
