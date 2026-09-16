@@ -47,3 +47,12 @@ class GetCurrentUserUseCase {
     return repository.getCurrentUser();
   }
 }
+
+class RefreshProfileUseCase {
+  final AuthRepository repository;
+  RefreshProfileUseCase(this.repository);
+
+  Future<Either<Failure, AppUser?>> call() {
+    return repository.refreshProfile();
+  }
+}

@@ -65,6 +65,9 @@ async def search_products(
 async def list_products(
     category: str | None = None,
     q: str | None = None,
+    min_price: float | None = Query(default=None, ge=0),
+    max_price: float | None = Query(default=None, ge=0),
+    brands: str | None = None,
     sort: str = Query(default="newest", pattern="^(newest|price_asc|price_desc|rating|popular)$"),
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=24, ge=1, le=100),
@@ -79,6 +82,14 @@ async def list_products(
     if q:
         term = f"%{q.strip()}%"
         filters.append(or_(Product.name.ilike(term), Product.description.ilike(term), Product.brand.ilike(term)))
+    if min_price is not None:
+        filters.append(Product.price >= min_price)
+    if max_price is not None:
+        filters.append(Product.price <= max_price)
+    if brands:
+        brand_list = [b.strip() for b in brands.split(",") if b.strip()]
+        if brand_list:
+            filters.append(Product.brand.in_(brand_list))
 
     total = await db.scalar(select(func.count(Product.id)).where(*filters)) or 0
 
@@ -123,3 +134,74 @@ async def get_product(product_id: str, db: AsyncSession = Depends(get_db)):
     if product is None or not product.is_active:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Product not found")
     return product_out(product)
+
+
+@router.get("/{product_id}/related")
+async def get_related_products(product_id: str, db: AsyncSession = Depends(get_db)):
+    """Deterministic, honest product relationships.
+
+    - similar: top-rated products in the same category
+    - cheaper: same category, price below this product (best value first)
+    - higherEnd: same category, price above this product
+    - complementary: same brand, different category (or featured picks when
+      the brand has no other catalogue)
+    Never a fabricated "winner" — just alternatives grouped by what they offer.
+    """
+    product = await db.scalar(
+        select(Product).options(selectinload(Product.category)).where(Product.id == product_id)
+    )
+    if product is None or not product.is_active:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Product not found")
+
+    same_category = await db.scalars(
+        select(Product)
+        .options(selectinload(Product.category))
+        .where(
+            Product.is_active.is_(True),
+            Product.category_id == product.category_id,
+            Product.id != product.id,
+        )
+    )
+    siblings = list(same_category)
+
+    def by_price_desc(ps): return sorted(ps, key=lambda p: p.price, reverse=True)
+    def by_price_asc(ps): return sorted(ps, key=lambda p: p.price)
+    def by_rating(ps): return sorted(ps, key=lambda p: p.rating, reverse=True)
+
+    similar = by_rating(siblings)[:4]
+    cheaper = [p for p in siblings if p.price < product.price]
+    higher_end = [p for p in siblings if p.price > product.price]
+    cheaper = by_price_desc(cheaper)[:4]
+    higher_end = by_price_asc(higher_end)[:4]
+
+    complementary = []
+    if product.brand:
+        complementary = await db.scalars(
+            select(Product)
+            .options(selectinload(Product.category))
+            .where(
+                Product.is_active.is_(True),
+                Product.brand == product.brand,
+                Product.category_id != product.category_id,
+                Product.id != product.id,
+            )
+            .order_by(Product.rating.desc())
+            .limit(4)
+        )
+        complementary = list(complementary)
+    if not complementary:
+        complementary = await db.scalars(
+            select(Product)
+            .options(selectinload(Product.category))
+            .where(Product.is_active.is_(True), Product.is_featured.is_(True), Product.id != product.id)
+            .order_by(Product.rating.desc())
+            .limit(4)
+        )
+        complementary = list(complementary)
+
+    return {
+        "similar": [product_out(p) for p in similar],
+        "cheaper": [product_out(p) for p in cheaper],
+        "higherEnd": [product_out(p) for p in higher_end],
+        "complementary": [product_out(p) for p in complementary],
+    }

@@ -16,10 +16,11 @@ class AppColors {
   static const Color onBackground = Color(0xFF1D1D1F);
   static const Color onSurface = Color(0xFF1D1D1F);
   
-  static const Color textPrimary = Color(0xFF1D1D1F);
+static const Color textPrimary = Color(0xFF1D1D1F);
   static const Color textSecondary = Color(0xFF86868B);
   static const Color textHint = Color(0xFFA1A1A6);
-  
+  static const Color textMuted = Color(0xFFB6B6BC);
+
   static const Color border = Color(0xFFD2D2D7);
   static const Color divider = Color(0xFFE5E5E7);
   
@@ -53,6 +54,12 @@ class AppTypography {
     color: AppColors.textPrimary,
   );
 
+  static const TextStyle titleMedium = TextStyle(
+    fontSize: 16,
+    fontWeight: FontWeight.w600,
+    color: AppColors.textPrimary,
+  );
+
   static const TextStyle bodyLarge = TextStyle(
     fontSize: 17,
     fontWeight: FontWeight.w400,
@@ -69,6 +76,18 @@ class AppTypography {
   static const TextStyle labelMedium = TextStyle(
     fontSize: 13,
     fontWeight: FontWeight.w500,
+    color: AppColors.textSecondary,
+  );
+
+  static const TextStyle bodySmall = TextStyle(
+    fontSize: 13,
+    fontWeight: FontWeight.w400,
+    color: AppColors.textPrimary,
+  );
+
+  static const TextStyle caption = TextStyle(
+    fontSize: 12,
+    fontWeight: FontWeight.w400,
     color: AppColors.textSecondary,
   );
 }

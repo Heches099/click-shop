@@ -74,6 +74,11 @@ class ProfileScreen extends ConsumerWidget {
         const SizedBox(height: 32),
         _buildMenuSection('Quick Access', [
           _MenuItem(
+            icon: Icons.compare_arrows_rounded,
+            title: 'Compare',
+            onTap: () => context.push('/compare'),
+          ),
+          _MenuItem(
             icon: Icons.bookmark_outline_rounded,
             title: 'Saved for later',
             onTap: () => ref.read(mainTabIndexProvider.notifier).state = 2,
@@ -82,6 +87,62 @@ class ProfileScreen extends ConsumerWidget {
             icon: Icons.rocket_launch_rounded,
             title: 'Affiliate Program',
             onTap: () => context.push('/affiliate'),
+          ),
+        ]),
+        const SizedBox(height: 32),
+        _buildMenuSection('Discover', [
+          _MenuItem(
+            icon: Icons.collections_bookmark_outlined,
+            title: 'Collections',
+            onTap: () => context.push('/collections'),
+          ),
+          _MenuItem(
+            icon: Icons.menu_book_outlined,
+            title: 'Buying guides',
+            onTap: () => context.push('/guides'),
+          ),
+          _MenuItem(
+            icon: Icons.assistant_outlined,
+            title: 'Help me choose',
+            onTap: () => context.push('/help-me-choose'),
+          ),
+          _MenuItem(
+            icon: Icons.history_rounded,
+            title: 'Orders',
+            onTap: () => context.push('/orders'),
+          ),
+        ]),
+        const SizedBox(height: 32),
+        if (user.isAdmin) ...[
+          _buildMenuSection('Owner', [
+            _MenuItem(
+              icon: Icons.dashboard_customize_outlined,
+              title: 'Owner dashboard',
+              onTap: () => context.push('/owner'),
+            ),
+          ]),
+          const SizedBox(height: 32),
+        ],
+        _buildMenuSection('Store info', [
+          _MenuItem(
+            icon: Icons.info_outline_rounded,
+            title: 'About ClickShop',
+            onTap: () => context.push('/about'),
+          ),
+          _MenuItem(
+            icon: Icons.mail_outline_rounded,
+            title: 'Contact us',
+            onTap: () => context.push('/contact'),
+          ),
+          _MenuItem(
+            icon: Icons.lock_outline_rounded,
+            title: 'Privacy policy',
+            onTap: () => context.push('/privacy'),
+          ),
+          _MenuItem(
+            icon: Icons.description_outlined,
+            title: 'Terms of service',
+            onTap: () => context.push('/terms'),
           ),
         ]),
         const SizedBox(height: 32),

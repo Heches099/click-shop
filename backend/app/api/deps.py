@@ -27,6 +27,23 @@ async def get_current_user(
     return user
 
 
+async def get_optional_user(
+    credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
+    db: AsyncSession = Depends(get_db),
+) -> User | None:
+    """Like get_current_user but anonymous requests are allowed (returns None).
+
+    Used only on low-risk attribution endpoints (analytics, contact). When a
+    token is present it MUST still be valid — an invalid token is rejected.
+    """
+    if credentials is None:
+        return None
+    user_id = decode_token(credentials.credentials)
+    if user_id is None:
+        return None
+    return await db.scalar(select(User).where(User.id == user_id, User.is_active.is_(True)))
+
+
 async def get_current_admin(user: User = Depends(get_current_user)) -> User:
     if not user.is_admin:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin access required")

@@ -18,6 +18,7 @@ mixin _$UserModel {
   String get email;
   String? get name;
   String? get photoUrl;
+  bool get isAdmin;
 
   /// Create a copy of UserModel
   /// with the given fields replaced by the non-null parameter values.
@@ -38,16 +39,18 @@ mixin _$UserModel {
             (identical(other.email, email) || other.email == email) &&
             (identical(other.name, name) || other.name == name) &&
             (identical(other.photoUrl, photoUrl) ||
-                other.photoUrl == photoUrl));
+                other.photoUrl == photoUrl) &&
+            (identical(other.isAdmin, isAdmin) || other.isAdmin == isAdmin));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, id, email, name, photoUrl);
+  int get hashCode =>
+      Object.hash(runtimeType, id, email, name, photoUrl, isAdmin);
 
   @override
   String toString() {
-    return 'UserModel(id: $id, email: $email, name: $name, photoUrl: $photoUrl)';
+    return 'UserModel(id: $id, email: $email, name: $name, photoUrl: $photoUrl, isAdmin: $isAdmin)';
   }
 }
 
@@ -56,7 +59,8 @@ abstract mixin class $UserModelCopyWith<$Res> {
   factory $UserModelCopyWith(UserModel value, $Res Function(UserModel) _then) =
       _$UserModelCopyWithImpl;
   @useResult
-  $Res call({String id, String email, String? name, String? photoUrl});
+  $Res call(
+      {String id, String email, String? name, String? photoUrl, bool isAdmin});
 }
 
 /// @nodoc
@@ -75,6 +79,7 @@ class _$UserModelCopyWithImpl<$Res> implements $UserModelCopyWith<$Res> {
     Object? email = null,
     Object? name = freezed,
     Object? photoUrl = freezed,
+    Object? isAdmin = null,
   }) {
     return _then(_self.copyWith(
       id: null == id
@@ -93,6 +98,10 @@ class _$UserModelCopyWithImpl<$Res> implements $UserModelCopyWith<$Res> {
           ? _self.photoUrl
           : photoUrl // ignore: cast_nullable_to_non_nullable
               as String?,
+      isAdmin: null == isAdmin
+          ? _self.isAdmin
+          : isAdmin // ignore: cast_nullable_to_non_nullable
+              as bool,
     ));
   }
 }
@@ -190,14 +199,16 @@ extension UserModelPatterns on UserModel {
 
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>(
-    TResult Function(String id, String email, String? name, String? photoUrl)?
+    TResult Function(String id, String email, String? name, String? photoUrl,
+            bool isAdmin)?
         $default, {
     required TResult orElse(),
   }) {
     final _that = this;
     switch (_that) {
       case _UserModel() when $default != null:
-        return $default(_that.id, _that.email, _that.name, _that.photoUrl);
+        return $default(
+            _that.id, _that.email, _that.name, _that.photoUrl, _that.isAdmin);
       case _:
         return orElse();
     }
@@ -218,13 +229,15 @@ extension UserModelPatterns on UserModel {
 
   @optionalTypeArgs
   TResult when<TResult extends Object?>(
-    TResult Function(String id, String email, String? name, String? photoUrl)
+    TResult Function(String id, String email, String? name, String? photoUrl,
+            bool isAdmin)
         $default,
   ) {
     final _that = this;
     switch (_that) {
       case _UserModel():
-        return $default(_that.id, _that.email, _that.name, _that.photoUrl);
+        return $default(
+            _that.id, _that.email, _that.name, _that.photoUrl, _that.isAdmin);
       case _:
         throw StateError('Unexpected subclass');
     }
@@ -244,13 +257,15 @@ extension UserModelPatterns on UserModel {
 
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>(
-    TResult? Function(String id, String email, String? name, String? photoUrl)?
+    TResult? Function(String id, String email, String? name, String? photoUrl,
+            bool isAdmin)?
         $default,
   ) {
     final _that = this;
     switch (_that) {
       case _UserModel() when $default != null:
-        return $default(_that.id, _that.email, _that.name, _that.photoUrl);
+        return $default(
+            _that.id, _that.email, _that.name, _that.photoUrl, _that.isAdmin);
       case _:
         return null;
     }
@@ -261,7 +276,11 @@ extension UserModelPatterns on UserModel {
 @JsonSerializable()
 class _UserModel implements UserModel {
   const _UserModel(
-      {required this.id, required this.email, this.name, this.photoUrl});
+      {required this.id,
+      required this.email,
+      this.name,
+      this.photoUrl,
+      this.isAdmin = false});
   factory _UserModel.fromJson(Map<String, dynamic> json) =>
       _$UserModelFromJson(json);
 
@@ -273,6 +292,9 @@ class _UserModel implements UserModel {
   final String? name;
   @override
   final String? photoUrl;
+  @override
+  @JsonKey()
+  final bool isAdmin;
 
   /// Create a copy of UserModel
   /// with the given fields replaced by the non-null parameter values.
@@ -298,16 +320,18 @@ class _UserModel implements UserModel {
             (identical(other.email, email) || other.email == email) &&
             (identical(other.name, name) || other.name == name) &&
             (identical(other.photoUrl, photoUrl) ||
-                other.photoUrl == photoUrl));
+                other.photoUrl == photoUrl) &&
+            (identical(other.isAdmin, isAdmin) || other.isAdmin == isAdmin));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, id, email, name, photoUrl);
+  int get hashCode =>
+      Object.hash(runtimeType, id, email, name, photoUrl, isAdmin);
 
   @override
   String toString() {
-    return 'UserModel(id: $id, email: $email, name: $name, photoUrl: $photoUrl)';
+    return 'UserModel(id: $id, email: $email, name: $name, photoUrl: $photoUrl, isAdmin: $isAdmin)';
   }
 }
 
@@ -319,7 +343,8 @@ abstract mixin class _$UserModelCopyWith<$Res>
       __$UserModelCopyWithImpl;
   @override
   @useResult
-  $Res call({String id, String email, String? name, String? photoUrl});
+  $Res call(
+      {String id, String email, String? name, String? photoUrl, bool isAdmin});
 }
 
 /// @nodoc
@@ -338,6 +363,7 @@ class __$UserModelCopyWithImpl<$Res> implements _$UserModelCopyWith<$Res> {
     Object? email = null,
     Object? name = freezed,
     Object? photoUrl = freezed,
+    Object? isAdmin = null,
   }) {
     return _then(_UserModel(
       id: null == id
@@ -356,6 +382,10 @@ class __$UserModelCopyWithImpl<$Res> implements _$UserModelCopyWith<$Res> {
           ? _self.photoUrl
           : photoUrl // ignore: cast_nullable_to_non_nullable
               as String?,
+      isAdmin: null == isAdmin
+          ? _self.isAdmin
+          : isAdmin // ignore: cast_nullable_to_non_nullable
+              as bool,
     ));
   }
 }

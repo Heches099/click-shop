@@ -11,6 +11,12 @@ abstract class AuthRemoteDataSource {
   Future<void> signOut();
   Future<UserModel?> getCurrentUser();
 
+  /// Fetches the authenticated profile from the ClickShop API (`/auth/me`).
+  /// Returns null when the API JWT is missing/expired — callers should fall
+  /// back to the local Firebase profile. This is the ONLY trusted source of
+  /// the owner (`isAdmin`) flag; it is never taken from the client.
+  Future<UserModel?> getApiUser();
+
   /// ClickShop API JWT exchanged from the Firebase ID token, if available.
   Future<String?> getApiToken();
   Future<void> clearApiToken();
@@ -75,6 +81,34 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       return null;
     }
     return _fromUser(user);
+  }
+
+  @override
+  Future<UserModel?> getApiUser() async {
+    try {
+      const exchangeDelay = Duration(seconds: 1);
+      // The API JWT exchange from Firebase is fire-and-forget; give it a beat
+      // so the very first /auth/me call after a fresh sign-in usually works.
+      await Future<void>.delayed(exchangeDelay);
+      final token = await _tokenStorage.read();
+      if (token == null || token.isEmpty) return null;
+      final response =
+          await _dioClient.dio.get('/auth/me').timeout(const Duration(seconds: 8));
+      final data = response.data;
+      if (data is! Map) return null;
+      final firebase = _firebaseAuth.currentUser;
+      final id = data['id'] as String? ?? firebase?.uid ?? '';
+      if (id.isEmpty) return null;
+      return UserModel(
+        id: id,
+        email: data['email'] as String? ?? firebase?.email ?? '',
+        name: data['name'] as String? ?? firebase?.displayName,
+        photoUrl: data['photoUrl'] as String? ?? firebase?.photoURL,
+        isAdmin: data['isAdmin'] == true,
+      );
+    } catch (_) {
+      return null;
+    }
   }
 
   @override

@@ -7,6 +7,8 @@ from app.models.address import Address
 from app.models.cart import Cart, CartItem
 from app.models.order import Order, OrderItem
 from app.models.affiliate import AffiliateAccount, AffiliateClick, AffiliateCommission, Payout
+from app.models.content import Collection, Guide, collection_products
+from app.models.insight import AnalyticsEvent, AuditLog, ContactMessage
 
 __all__ = [
     "Base",
@@ -23,4 +25,10 @@ __all__ = [
     "AffiliateClick",
     "AffiliateCommission",
     "Payout",
+    "Collection",
+    "Guide",
+    "collection_products",
+    "AnalyticsEvent",
+    "AuditLog",
+    "ContactMessage",
 ]

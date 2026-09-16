@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../config/design_tokens.dart';
 import '../../../core/services/service_locator.dart';
+import '../../../core/services/events/event_tracker.dart';
 import '../../../core/utils/responsive.dart';
 import '../../../domain/entities/order.dart';
 import '../../../domain/entities/user.dart';
@@ -646,6 +647,11 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
 
     setState(() => _placingOrder = true);
 
+    EventTracker().track('begin_checkout',
+        payload: {
+          'itemCount': items.length,
+        });
+
     final affiliateCode = await sl<AffiliateUseCase>().getCurrentRefCode();
     final paymentResult = await sl<PaymentService>().processCheckout(
       items: items,
@@ -679,6 +685,10 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       orderId: order.id,
       amount: order.total,
     );
+    EventTracker().track('purchase', payload: {
+      'orderId': order.id,
+      'amount': order.total,
+    });
 
     // Attribute commission to the referring affiliate, if the visitor came
     // through an affiliate tracking link (?ref=CODE). The backend already

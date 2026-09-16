@@ -8,7 +8,16 @@ import '../presentation/auth/screens/login_screen.dart';
 import '../presentation/auth/screens/signup_screen.dart';
 import '../presentation/categories/screens/category_detail_screen.dart';
 import '../presentation/checkout/screens/checkout_screen.dart';
+import '../presentation/compare/screens/compare_screen.dart';
 import '../presentation/core/screens/not_found_screen.dart';
+import '../presentation/discover/screens/collection_detail_screen.dart';
+import '../presentation/discover/screens/collections_list_screen.dart';
+import '../presentation/discover/screens/guide_detail_screen.dart';
+import '../presentation/discover/screens/guides_list_screen.dart';
+import '../presentation/help/screens/help_choose_screen.dart';
+import '../presentation/info/screens/contact_screen.dart';
+import '../presentation/info/screens/info_page_screen.dart';
+import '../presentation/admin/screens/owner_dashboard_screen.dart';
 import '../presentation/orders/screens/order_list_screen.dart';
 import '../presentation/product/screens/product_detail_screen.dart';
 import '../presentation/search/screens/search_screen.dart';
@@ -61,6 +70,62 @@ final router = GoRouter(
     GoRoute(
       path: '/orders',
       builder: (context, state) => const OrderListScreen(),
+    ),
+    GoRoute(
+      path: '/compare',
+      builder: (context, state) => const CompareScreen(),
+    ),
+    GoRoute(
+      path: '/collections',
+      builder: (context, state) => const CollectionsListScreen(),
+    ),
+    GoRoute(
+      path: '/collections/:slug',
+      builder: (context, state) => CollectionDetailScreen(
+        slug: state.pathParameters['slug'] ?? '',
+      ),
+    ),
+    GoRoute(
+      path: '/guides',
+      builder: (context, state) => const GuidesListScreen(),
+    ),
+    GoRoute(
+      path: '/guides/:slug',
+      builder: (context, state) => GuideDetailScreen(
+        slug: state.pathParameters['slug'] ?? '',
+      ),
+    ),
+    GoRoute(
+      path: '/help-me-choose',
+      builder: (context, state) => const HelpMeChooseScreen(),
+    ),
+    GoRoute(
+      path: '/about',
+      builder: (context, state) => const InfoPageScreen(slug: 'about'),
+    ),
+    GoRoute(
+      path: '/contact',
+      builder: (context, state) => const ContactScreen(),
+    ),
+    GoRoute(
+      path: '/returns',
+      builder: (context, state) => const InfoPageScreen(slug: 'returns'),
+    ),
+    GoRoute(
+      path: '/shipping',
+      builder: (context, state) => const InfoPageScreen(slug: 'shipping'),
+    ),
+    GoRoute(
+      path: '/privacy',
+      builder: (context, state) => const InfoPageScreen(slug: 'privacy'),
+    ),
+    GoRoute(
+      path: '/terms',
+      builder: (context, state) => const InfoPageScreen(slug: 'terms'),
+    ),
+    GoRoute(
+      path: '/owner',
+      builder: (context, state) => const OwnerDashboardScreen(),
     ),
     // Legacy `/products/:id` product URLs — redirected to the canonical slug
     // URL when the product is resolved (kept as a route so deep links survive).

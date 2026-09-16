@@ -21,6 +21,11 @@ def normalize_email(email: str) -> str:
     return email.strip().lower()
 
 
+def is_admin_email(email: str) -> bool:
+    """True when the email is on the server-side ADMIN_EMAILS owner list."""
+    return normalize_email(email) in settings.admin_emails_list
+
+
 async def _verify_with_identitytoolkit(id_token: str) -> dict | None:
     """Verify an ID token against THIS Firebase project (accounts:lookup).
 
@@ -115,8 +120,13 @@ async def get_or_create_user_by_email(db: AsyncSession, email: str, name: str | 
             hashed_password=hash_password(secrets.token_urlsafe(32)),
             name=name or email.split("@")[0],
             photo_url=photo_url,
+            is_admin=is_admin_email(email),
         )
         db.add(user)
         await db.commit()
         await db.refresh(user)
+    elif is_admin_email(email) and not user.is_admin:
+        # Keep owner status in sync with ADMIN_EMAILS (server-side only).
+        user.is_admin = True
+        await db.commit()
     return user

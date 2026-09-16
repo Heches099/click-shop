@@ -123,8 +123,93 @@ check("admin order status", r.status_code == 200 and r.json()["status"] == "ship
 r = client.put(f"/v1/admin/orders/{order['id']}/tracking", headers=ah, json={"tracking_number": "TRK123"})
 check("admin tracking", r.status_code == 200 and r.json()["trackingNumber"] == "TRK123")
 
+# --- for forbidden / missing checks ---
+
+# --- discovery: search suggest/popular, filters, related ---
+r = client.get("/v1/search/popular")
+check("search popular", r.status_code == 200 and isinstance(r.json(), list))
+r = client.get("/v1/search/suggest?q=hood")
+data = r.json()
+check("search suggest", r.status_code == 200 and {"products", "categories", "popular"} <= set(data), r.text[:200])
+r = client.get("/v1/products?q=hoodie")
+check("catalog q search", r.status_code == 200 and r.json()["total"] >= 1)
+r = client.get("/v1/products?min_price=0&max_price=60")
+check("price filter", r.status_code == 200 and all(p["price"] <= 60 for p in r.json()["items"]), r.text[:120])
+brand = client.get("/v1/products?category=sneakers").json()["items"][0]["brand"]
+r = client.get(f"/v1/products?brands={brand}")
+check("brand filter", r.status_code == 200 and r.json()["total"] >= 1)
+rel = client.get(f"/v1/products/{pid}/related")
+check("related", rel.status_code == 200 and {"similar", "cheaper", "higherEnd", "complementary"} <= set(rel.json()), rel.text[:200])
+r = client.get("/v1/products/not-a-real-id-0000/related")
+check("related 404", r.status_code == 404)
+
+# --- content: collections & guides ---
+r = client.get("/v1/content/collections"); cols = r.json()
+check("collections list", r.status_code == 200 and len(cols) >= 4 and "productCount" in cols[0], r.text[:200])
+r = client.get(f"/v1/content/collections/{cols[0]['slug']}")
+check("collection detail", r.status_code == 200 and r.json()["productCount"] == len(r.json()["products"]), r.text[:200])
+r = client.get("/v1/content/collections/zzz-not-real"); check("collection 404", r.status_code == 404)
+r = client.get("/v1/content/guides"); guides = r.json()
+check("guides list", r.status_code == 200 and len(guides) >= 4 and "summary" in guides[0], r.text[:200])
+r = client.get(f"/v1/content/guides/{guides[0]['slug']}")
+check("guide detail", r.status_code == 200 and len(r.json()["body"]) > 100, r.text[:200])
+r = client.get("/v1/content/guides/zzz-not-real"); check("guide 404", r.status_code == 404)
+
+# --- analytics events (anonymous + validation) ---
+r = client.post("/v1/analytics/events", json={"event_type": "search", "client_id": "test-client-0001", "payload": {"q": "hoodie"}})
+check("analytics search event", r.status_code == 202, r.text[:200])
+r = client.post("/v1/analytics/events", json={"event_type": "search", "client_id": "test-client-0001", "payload": {"q": "hoodie", "nested": {"x": 1}}})
+check("analytics sanitises nested payload", r.status_code == 202, r.text[:200])
+r = client.post("/v1/analytics/events", json={"event_type": "view_product", "client_id": "test-client-0001", "product_id": pid})
+check("analytics view event", r.status_code == 202, r.text[:200])
+r = client.post("/v1/analytics/events", json={"event_type": "totally-fake-event", "payload": {}})
+check("analytics unknown type rejected", r.status_code == 422)
+r = client.get("/v1/search/popular")
+check("popular now has real query", r.status_code == 200 and "hoodie" in r.json(), r.text[:200])
+
+# --- contact (works without any email provider) ---
+r = client.post("/v1/contact", json={"name": "Pat", "email": "pat@example.com", "subject": "Order question", "message": "How long does shipping usually take for orders?"})
+check("contact submit", r.status_code == 201 and r.json()["isRead"] is False, r.text[:200])
+r = client.post("/v1/contact", json={"name": "Pat", "email": "pat@example.com", "message": "short"})
+check("contact rejects short message", r.status_code == 422)
+
+# --- admin: ops surface (analytics, inbox, audit, content CRUD) ---
+r = client.get("/v1/admin/analytics/summary", headers=ah)
+check("admin analytics summary", r.status_code == 200 and "funnel" in r.json() and "topSearches" in r.json(), r.text[:300])
+r = client.get("/v1/admin/contact-messages", headers=ah)
+inbox = r.json()
+check("admin contact inbox", r.status_code == 200 and any(m["email"] == "pat@example.com" for m in inbox), r.text[:200])
+mid = inbox[0]["id"]
+r = client.patch(f"/v1/admin/contact-messages/{mid}/read", headers=ah)
+check("mark contact read", r.status_code == 200 and r.json()["isRead"] is True, r.text[:200])
+r = client.get("/v1/admin/audit-log", headers=ah)
+check("admin audit log", r.status_code == 200 and len(r.json()) >= 1, r.text[:300])
+r = client.get("/v1/admin/collections", headers=ah)
+check("admin collections list", r.status_code == 200 and len(r.json()) >= 4, r.text[:200])
+r = client.post("/v1/admin/collections", headers=ah, json={"slug": "test-col", "name": "Test Collection", "description": "d", "product_ids": [pid]})
+check("admin create collection", r.status_code == 201 and len(r.json()["products"]) >= 1, r.text[:200])
+col_id = r.json()["id"]
+r = client.delete(f"/v1/admin/collections/{col_id}", headers=ah)
+check("admin delete collection", r.status_code == 204)
+r = client.post("/v1/admin/guides", headers=ah, json={"slug": "test-guide", "title": "Test Guide", "summary": "s", "body": "body " * 30, "category_slug": "electronics"})
+check("admin create guide", r.status_code == 201, r.text[:200])
+guide_id = r.json()["id"]
+r = client.delete(f"/v1/admin/guides/{guide_id}", headers=ah)
+check("admin delete guide", r.status_code == 204)
+r = client.post("/v1/admin/products", headers=ah, json={"name": "Edit-me Product", "description": "d", "price": 5.0, "category_slug": "home", "brand": "B", "stock": 3})
+check("admin create edit product", r.status_code == 201, r.text[:200])
+edit_pid = r.json()["id"]
+r = client.put(f"/v1/admin/products/{edit_pid}", headers=ah, json={"price": 9.5})
+check("admin update product", r.status_code == 200 and r.json()["price"] == 9.5, r.text[:200])
+r = client.delete(f"/v1/admin/products/{edit_pid}", headers=ah)
+check("admin soft-delete product", r.status_code == 204)
+r = client.post("/v1/admin/categories?name=TestCat", headers=ah)
+check("admin create category", r.status_code == 201 and r.json()["slug"] == "testcat", r.text[:200])
+
 # --- forbidden checks ---
 r = client.get("/v1/admin/stats", headers=h); check("non-admin blocked", r.status_code == 403)
+r = client.get("/v1/admin/analytics/summary", headers=h); check("non-admin analytics blocked", r.status_code == 403)
+r = client.get("/v1/admin/contact-messages", headers=h); check("non-admin inbox blocked", r.status_code == 403)
 r = client.get("/v1/orders/does-not-exist", headers=h); check("404 on missing order", r.status_code == 404)
 
 print(f"\n{('ALL PASSED ' + str(PASS)) if not FAIL else 'FAILURES: ' + ', '.join(FAIL)}")

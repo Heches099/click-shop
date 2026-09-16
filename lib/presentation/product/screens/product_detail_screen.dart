@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../config/design_tokens.dart';
 import '../../../core/services/ads/ad_config.dart';
+import '../../../core/services/events/event_tracker.dart';
 import '../../../core/services/seo/seo_service.dart';
 import '../../../core/utils/open_link.dart';
 import '../../../core/utils/responsive.dart';
@@ -15,9 +16,13 @@ import '../../../core/widgets/google_ad_banner.dart';
 import '../../../domain/entities/amazon_product.dart';
 import '../../../domain/entities/product.dart';
 import '../../cart/providers/cart_provider.dart';
+import '../../compare/providers/compare_provider.dart';
 import '../../home/providers/home_provider.dart';
+import '../../home/widgets/product_card.dart';
+import '../../recent/providers/recent_views_provider.dart';
 import '../../saved/providers/saved_provider.dart';
 import '../../home/providers/amazon_provider.dart';
+import '../providers/related_provider.dart';
 
 class ProductDetailScreen extends ConsumerStatefulWidget {
   final Product product;
@@ -54,7 +59,13 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
       _hydrateProduct();
     } else {
       _syncSeo(widget.product);
+      WidgetsBinding.instance.addPostFrameCallback((_) => _recordView(widget.product));
     }
+  }
+
+  void _recordView(Product product) {
+    ref.read(recentViewsProvider.notifier).record(product);
+    EventTracker().track('view_product', productId: product.id);
   }
 
   Future<void> _hydrateProduct() async {
@@ -87,6 +98,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
         _loading = false;
       });
       _syncSeo(product);
+      _recordView(product);
     } catch (error) {
       if (!mounted) return;
       setState(() {
@@ -216,6 +228,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
               _buildProductInfo(product),
               if (!_isAmazon(product)) _buildSelectionSections(product),
               if (!_isAmazon(product)) _buildSpecifications(product),
+              _buildRelatedSection(product),
               const SliverToBoxAdapter(
                 child: Padding(
                   padding: EdgeInsets.symmetric(horizontal: 24, vertical: 8),
@@ -243,6 +256,9 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
     final saved =
         ref.watch(savedProvider).asData?.value ?? const <AmazonProduct>[];
     final isSaved = saved.any((p) => p.asin == product.asin);
+    final inCompare = ref.watch(compareProvider).asData?.value
+            .any((p) => p.id == product.id) ??
+        false;
 
     final topPadding = MediaQuery.viewPaddingOf(context).top;
     return Positioned(
@@ -257,34 +273,44 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                 Icons.arrow_back_ios_new_rounded, () => Navigator.pop(context)),
           ),
           FadeInRight(
-            child: _buildCircleButton(
-              isAmazon
-                  ? (isSaved
-                      ? Icons.bookmark_rounded
-                      : Icons.bookmark_border_rounded)
-                  : Icons.favorite_border_rounded,
-              isAmazon
-                  ? () {
-                      final amazonProduct = AmazonProduct(
-                        id: product.id,
-                        asin: product.asin ?? product.id,
-                        name: product.name,
-                        description: '',
-                        price: product.price,
-                        originalPrice: product.originalPrice,
-                        images: product.images,
-                        rating: product.rating,
-                        reviewCount: product.reviewCount,
-                        category: product.category,
-                        brand: product.brand,
-                        amazonUrl: product.amazonUrl ?? '',
-                      );
-                      ref.read(savedProvider.notifier).toggle(amazonProduct);
-                    }
-                  : () {},
-              color: isAmazon && isSaved
-                  ? const Color(0xFFFF9900)
-                  : AppColors.textPrimary,
+            child: Row(
+              children: [
+                _buildCircleButton(
+                  Icons.compare_arrows_rounded,
+                  () => ref.read(compareProvider.notifier).toggle(product),
+                  color: inCompare ? AppColors.accent : AppColors.textPrimary,
+                ),
+                const SizedBox(width: 10),
+                _buildCircleButton(
+                  isAmazon
+                      ? (isSaved
+                          ? Icons.bookmark_rounded
+                          : Icons.bookmark_border_rounded)
+                      : Icons.favorite_border_rounded,
+                  isAmazon
+                      ? () {
+                          final amazonProduct = AmazonProduct(
+                            id: product.id,
+                            asin: product.asin ?? product.id,
+                            name: product.name,
+                            description: '',
+                            price: product.price,
+                            originalPrice: product.originalPrice,
+                            images: product.images,
+                            rating: product.rating,
+                            reviewCount: product.reviewCount,
+                            category: product.category,
+                            brand: product.brand,
+                            amazonUrl: product.amazonUrl ?? '',
+                          );
+                          ref.read(savedProvider.notifier).toggle(amazonProduct);
+                        }
+                      : () {},
+                  color: isAmazon && isSaved
+                      ? const Color(0xFFFF9900)
+                      : AppColors.textPrimary,
+                ),
+              ],
             ),
           ),
         ],
@@ -614,6 +640,33 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
     );
   }
 
+  Widget _buildRelatedSection(Product product) {
+    return SliverPadding(
+      padding: EdgeInsets.all(AppResponsive.scale(context, 24)),
+      sliver: SliverToBoxAdapter(
+        child: FadeInUp(
+          delay: const Duration(milliseconds: 500),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Need more options?',
+                  style: AppTypography.titleLarge),
+              const SizedBox(height: 4),
+              Text(
+                'Honest alternatives to line up next to this one — no '
+                '"winners", just what is available.',
+                style: AppTypography.bodyMedium.copyWith(
+                    color: AppColors.textSecondary, height: 1.4),
+              ),
+              const SizedBox(height: 12),
+              _RelatedGroups(productId: product.id),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildBottomAction(Product product) {
     final isAmazonProduct =
         product.amazonUrl != null && product.amazonUrl!.isNotEmpty;
@@ -695,7 +748,10 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
   /// Amazon affiliate URL with tracking ID: clickshop03b-20
   Widget _buildAmazonBuyButton(Product product) {
     return GestureDetector(
-      onTap: () => openExternalLink(product.amazonUrl!),
+      onTap: () {
+        EventTracker().track('affiliate_click', productId: product.id);
+        openExternalLink(product.amazonUrl!);
+      },
       child: Container(
         width: double.infinity,
         height: 56,
@@ -727,6 +783,58 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _RelatedGroups extends ConsumerWidget {
+  final String productId;
+  const _RelatedGroups({required this.productId});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final related = ref.watch(relatedProductsProvider(productId));
+    return related.when(
+      loading: () =>
+          const Padding(
+            padding: EdgeInsets.all(16),
+            child: Center(child: CircularProgressIndicator()),
+          ),
+      error: (e, _) => const SizedBox.shrink(),
+      data: (groups) {
+        final sections = <(String, List<Product>)>[
+          if (groups.similar.isNotEmpty) ('Similar picks', groups.similar),
+          if (groups.cheaper.isNotEmpty) ('Cheaper options', groups.cheaper),
+          if (groups.higherEnd.isNotEmpty)
+            ('Higher-end options', groups.higherEnd),
+          if (groups.complementary.isNotEmpty)
+            ('Pairs well with', groups.complementary),
+        ];
+        if (sections.isEmpty) return const SizedBox.shrink();
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            for (final (title, items) in sections) ...[
+              Text(title, style: AppTypography.titleMedium),
+              const SizedBox(height: 10),
+              SizedBox(
+                height: 250,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  physics: const BouncingScrollPhysics(),
+                  itemCount: items.length,
+                  separatorBuilder: (_, __) => const SizedBox(width: 12),
+                  itemBuilder: (context, i) => SizedBox(
+                    width: 150,
+                    child: PremiumProductCard(product: items[i]),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
+          ],
+        );
+      },
     );
   }
 }

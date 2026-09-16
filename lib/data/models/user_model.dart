@@ -11,6 +11,7 @@ abstract class UserModel with _$UserModel {
     required String email,
     String? name,
     String? photoUrl,
+    @Default(false) bool isAdmin,
   }) = _UserModel;
 
   factory UserModel.fromJson(Map<String, dynamic> json) =>
@@ -21,6 +22,7 @@ abstract class UserModel with _$UserModel {
         email: user.email,
         name: user.name,
         photoUrl: user.photoUrl,
+        isAdmin: user.isAdmin,
       );
 }
 
@@ -30,5 +32,6 @@ extension UserModelX on UserModel {
         email: email,
         name: name,
         photoUrl: photoUrl,
+        isAdmin: isAdmin,
       );
 }

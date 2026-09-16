@@ -1,5 +1,6 @@
 import '../entities/product.dart';
 import '../entities/category.dart';
+import '../entities/admin_analytics.dart';
 import '../repositories/product_repository.dart';
 
 class ProductUseCase {
@@ -19,4 +20,22 @@ class ProductUseCase {
   Future<List<Product>> getFeaturedProducts() => repository.getFeaturedProducts();
 
   Future<List<CategoryEntity>> getCategories() => repository.getCategories();
+
+  Future<List<Product>> search({
+    String q = '',
+    String? category,
+    double? minPrice,
+    double? maxPrice,
+    List<String>? brands,
+  }) =>
+      repository.searchProducts(
+        q: q,
+        category: category,
+        minPrice: minPrice,
+        maxPrice: maxPrice,
+        brands: brands,
+      );
+
+  Future<RelatedProducts> getRelated(String productId) =>
+      repository.getRelatedProducts(productId);
 }

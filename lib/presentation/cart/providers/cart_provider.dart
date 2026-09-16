@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/services/events/event_tracker.dart';
 import '../../../core/services/service_locator.dart';
 import '../../../domain/entities/cart_item.dart';
 import '../../../domain/entities/product.dart';
@@ -41,6 +42,7 @@ class CartNotifier extends Notifier<List<CartItem>> {
       ];
     }
     _persist();
+    EventTracker().track('add_to_cart', productId: product.id);
   }
 
   void removeItem(String productId, {String? color, String? size}) {

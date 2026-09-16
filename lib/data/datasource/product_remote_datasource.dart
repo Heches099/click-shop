@@ -12,7 +12,22 @@ abstract class ProductRemoteDataSource {
   Future<ProductModel> getProductBySlug(String slug);
   Future<List<CategoryModel>> getCategories();
   Future<List<ProductModel>> getProductsByCategory(String categorySlug);
+  Future<List<ProductModel>> searchProducts({
+    String q = '',
+    String? category,
+    double? minPrice,
+    double? maxPrice,
+    List<String>? brands,
+  });
+  Future<RelatedProductsModels> getRelatedProducts(String productId);
 }
+
+typedef RelatedProductsModels = ({
+  List<ProductModel> similar,
+  List<ProductModel> cheaper,
+  List<ProductModel> higherEnd,
+  List<ProductModel> complementary,
+});
 
 class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
   final DioClient dioClient;
@@ -67,6 +82,49 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
     return items
         .map((json) => ProductModel.fromJson(_asObject(json)))
         .toList();
+  }
+
+  @override
+  Future<List<ProductModel>> searchProducts({
+    String q = '',
+    String? category,
+    double? minPrice,
+    double? maxPrice,
+    List<String>? brands,
+  }) async {
+    final params = <String, dynamic>{
+      if (q.trim().isNotEmpty) 'q': q.trim(),
+      if (category != null && category.isNotEmpty && category != 'all')
+        'category': category,
+      if (minPrice != null) 'min_price': minPrice,
+      if (maxPrice != null) 'max_price': maxPrice,
+      if (brands != null && brands.isNotEmpty) 'brands': brands.join(','),
+    };
+    final response = await dioClient.dio.get('/products', queryParameters: params);
+    final items = _extractList(response.data);
+    return items
+        .map((json) => ProductModel.fromJson(_asObject(json)))
+        .toList();
+  }
+
+  @override
+  Future<RelatedProductsModels> getRelatedProducts(String productId) async {
+    final response = await dioClient.dio.get('/products/$productId/related');
+    final data = _asObject(response.data);
+    List<ProductModel> group(String key) {
+      final raw = data[key];
+      if (raw is! List) return const [];
+      return raw
+          .map((json) => ProductModel.fromJson(_asObject(json)))
+          .toList();
+    }
+
+    return (
+      similar: group('similar'),
+      cheaper: group('cheaper'),
+      higherEnd: group('higherEnd'),
+      complementary: group('complementary'),
+    );
   }
 
   Future<List<ProductModel>> _fetchProducts(String path) async {

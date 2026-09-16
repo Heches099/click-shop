@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/services/events/event_tracker.dart';
 import '../../../core/services/service_locator.dart';
 import '../../../domain/entities/amazon_product.dart';
 import '../data/saved_store.dart';
@@ -26,6 +27,10 @@ class SavedNotifier extends AsyncNotifier<List<AmazonProduct>> {
         : [product, ...current];
     state = AsyncData(next);
     await sl<SavedStore>().persist(next);
+    EventTracker().track(
+      exists ? 'remove_saved_product' : 'save_product',
+      productId: product.asin,
+    );
   }
 
   Future<void> clearAll() async {

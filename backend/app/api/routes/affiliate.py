@@ -124,7 +124,7 @@ async def commissions(user: User = Depends(get_current_user), db: AsyncSession =
 async def record_click(
     payload: AffiliateClickCreate,
     request: Request,
-    _: None = Depends(rate_limit(limit=20, window_seconds=300)),
+    _: None = Depends(rate_limit("affiliate-clicks", limit=20, window_seconds=300)),
     db: AsyncSession = Depends(get_db),
 ):
     account = await db.scalar(select(AffiliateAccount).where(AffiliateAccount.promo_code == payload.code.strip()))

@@ -16,7 +16,7 @@ from fastapi import HTTPException, Request
 
 from app.core.config import settings
 
-_buckets: dict[str, list[float]] = defaultdict(list)
+_buckets: dict[tuple[str, str], list[float]] = defaultdict(list)
 
 _STATUS_429 = 429
 
@@ -42,11 +42,16 @@ def _client_key(request: Request) -> str:
     return socket_ip
 
 
-def rate_limit(limit: int, window_seconds: int):
-    """Return a FastAPI dependency enforcing `limit` calls per `window_seconds`."""
+def rate_limit(scope: str, limit: int, window_seconds: int):
+    """Return a FastAPI dependency enforcing `limit` calls per window.
+
+    `scope` names the route family so buckets are independent: one heavy route
+    (e.g. anonymous analytics) must not exhaust a second route's budget (e.g.
+    a customer trying to send a support message from the same IP).
+    """
 
     async def _check(request: Request) -> None:
-        key = _client_key(request)
+        key = (scope, _client_key(request))
         now = time.monotonic()
         bucket = _buckets[key]
         cutoff = now - window_seconds

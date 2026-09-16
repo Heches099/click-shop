@@ -1,4 +1,5 @@
 import '../../core/network/network_info.dart';
+import '../../domain/entities/admin_analytics.dart';
 import '../../domain/entities/product.dart';
 import '../../domain/entities/category.dart';
 import '../../domain/repositories/product_repository.dart';
@@ -50,5 +51,34 @@ class ProductRepositoryImpl implements ProductRepository {
   Future<List<CategoryEntity>> getCategories() async {
     final models = await remoteDataSource.getCategories();
     return models.map((m) => m.toEntity()).toList();
+  }
+
+  @override
+  Future<List<Product>> searchProducts({
+    String q = '',
+    String? category,
+    double? minPrice,
+    double? maxPrice,
+    List<String>? brands,
+  }) async {
+    final models = await remoteDataSource.searchProducts(
+      q: q,
+      category: category,
+      minPrice: minPrice,
+      maxPrice: maxPrice,
+      brands: brands,
+    );
+    return models.map((m) => m.toEntity()).toList();
+  }
+
+  @override
+  Future<RelatedProducts> getRelatedProducts(String productId) async {
+    final result = await remoteDataSource.getRelatedProducts(productId);
+    return (
+      similar: result.similar.map((m) => m.toEntity()).toList(),
+      cheaper: result.cheaper.map((m) => m.toEntity()).toList(),
+      higherEnd: result.higherEnd.map((m) => m.toEntity()).toList(),
+      complementary: result.complementary.map((m) => m.toEntity()).toList(),
+    );
   }
 }

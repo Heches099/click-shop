@@ -62,4 +62,18 @@ class AuthRepositoryImpl implements AuthRepository {
       return Left(Failure.serverError(e.toString()));
     }
   }
+
+  @override
+  Future<Either<Failure, AppUser?>> refreshProfile() async {
+    try {
+      final apiUser = await remoteDataSource.getApiUser();
+      if (apiUser != null) {
+        return Right(apiUser.toEntity());
+      }
+      // No API profile (unsigned-in or token absent) — signal "no change".
+      return const Right(null);
+    } catch (e) {
+      return Left(Failure.serverError(e.toString()));
+    }
+  }
 }

@@ -6,28 +6,39 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 import '../../data/datasource/affiliate_datasource.dart';
+import '../../data/datasource/admin_remote_datasource.dart';
 import '../../data/datasource/amazon_remote_datasource.dart';
 import '../../data/datasource/auth_remote_datasource.dart';
+import '../../data/datasource/discovery_remote_datasource.dart';
 import '../../data/datasource/local_cart_datasource.dart';
 import '../../data/datasource/order_remote_datasource.dart';
 import '../../data/datasource/product_remote_datasource.dart';
 import '../../data/datasource/remote_affiliate_datasource.dart';
+import '../../data/repositories/admin_repository_impl.dart';
 import '../../data/repositories/affiliate_repository_impl.dart';
 import '../../data/repositories/amazon_repository_impl.dart';
 import '../../data/repositories/auth_repository_impl.dart';
 import '../../data/repositories/cart_repository_impl.dart';
+import '../../data/repositories/discovery_repository_impl.dart';
 import '../../data/repositories/order_repository_impl.dart';
 import '../../data/repositories/product_repository_impl.dart';
+import '../../domain/repositories/admin_repository.dart';
 import '../../domain/repositories/affiliate_repository.dart';
 import '../../domain/repositories/amazon_repository.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../../domain/repositories/cart_repository.dart';
+import '../../domain/repositories/discovery_repository.dart';
 import '../../domain/repositories/order_repository.dart';
 import '../../domain/repositories/product_repository.dart';
+import '../../domain/usecases/admin_usecase.dart';
 import '../../domain/usecases/affiliate_usecase.dart';
 import '../../domain/usecases/amazon_usecase.dart';
 import '../../domain/usecases/auth_usecase.dart';
+import '../../domain/usecases/discovery_usecase.dart';
 import '../../domain/usecases/product_usecase.dart';
+import '../../presentation/compare/data/compare_store.dart';
+import '../../presentation/recent/data/recent_views_store.dart';
+import '../../presentation/recent/data/search_history_store.dart';
 import '../../presentation/saved/data/saved_store.dart';
 import '../constants/app_constants.dart';
 import '../network/dio_client.dart';
@@ -35,6 +46,7 @@ import '../network/network_info.dart';
 import '../network/token_storage.dart';
 import 'payments/payment_service.dart';
 import 'analytics/analytics_service.dart';
+import 'events/event_tracker.dart';
 
 final sl = GetIt.instance;
 
@@ -102,6 +114,30 @@ Future<void> initServiceLocator() async {
     ),
   );
 
+  // Discoverable shopping: collections, guides, suggestions, funnel analytics.
+  sl.registerLazySingleton<DiscoveryRemoteDataSource>(
+    () => DiscoveryRemoteDataSourceImpl(sl()),
+  );
+  sl.registerLazySingleton<DiscoveryRepository>(
+    () => DiscoveryRepositoryImpl(sl(), sl()),
+  );
+  sl.registerLazySingleton(() => DiscoveryUseCase(sl()));
+  sl.registerLazySingleton(() => EventTracker());
+
+  // Owner tooling (backend-authoritative; 403s for non-owners).
+  sl.registerLazySingleton<AdminRemoteDataSource>(
+    () => AdminRemoteDataSourceImpl(sl()),
+  );
+  sl.registerLazySingleton<AdminRepository>(
+    () => AdminRepositoryImpl(sl(), sl()),
+  );
+  sl.registerLazySingleton(() => AdminUseCase(sl()));
+
+  // Localized shopping state (Hive-backed).
+  sl.registerLazySingleton(() => CompareStore());
+  sl.registerLazySingleton(() => RecentViewsStore());
+  sl.registerLazySingleton(() => SearchHistoryStore());
+
   // Cart (persisted to Hive so page refreshes keep the bag).
   sl.registerLazySingleton<LocalCartDataSource>(
     () => HiveCartDataSource(cartBox),
@@ -124,5 +160,6 @@ Future<void> initServiceLocator() async {
   sl.registerLazySingleton(() => GoogleSignInUseCase(sl()));
   sl.registerLazySingleton(() => SignOutUseCase(sl()));
   sl.registerLazySingleton(() => GetCurrentUserUseCase(sl()));
+  sl.registerLazySingleton(() => RefreshProfileUseCase(sl()));
   sl.registerLazySingleton(() => ProductUseCase(sl()));
 }

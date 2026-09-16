@@ -38,4 +38,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Bare health probe (no /v1 prefix) — used by platform health checks.
+@app.get("/health")
+async def root_health():
+    # Mirror the versioned probe. Never returns env vars or secrets.
+    return {"status": "ok", "amazon_api_enabled": settings.amazon_api_enabled}
+
 app.include_router(api_router, prefix=settings.api_v1_prefix)

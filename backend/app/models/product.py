@@ -33,3 +33,4 @@ class Product(Base, TimestampMixin):
     category = relationship("Category", back_populates="products")
     reviews = relationship("Review", back_populates="product", cascade="all, delete-orphan")
     order_items = relationship("OrderItem", back_populates="product")
+    collections = relationship("Collection", secondary="collection_products", back_populates="products")

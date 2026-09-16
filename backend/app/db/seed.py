@@ -5,6 +5,7 @@ of demo products. Safe to re-run (upserts by slug / email).
 """
 
 import asyncio
+from datetime import UTC, datetime
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -12,7 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import settings
 from app.core.database import async_session, engine
 from app.core.security import hash_password
-from app.models import Category, Product, User, Base
+from app.models import Base, Category, Collection, Guide, Product, User
 
 CATEGORIES = [
     ("Sneakers", "sneakers", "https://picsum.photos/seed/cat-sneakers/400/400", 1),
@@ -45,6 +46,39 @@ PRODUCTS = [
 ]
 
 RATINGS = [4.5, 4.8, 4.6, 4.2, 4.9, 4.3, 4.7, 4.4, 4.6, 4.1, 4.8, 4.5, 4.7, 4.2, 4.6, 4.9, 4.4, 4.3]
+
+# slug -> list of product slugs (curated, honest groupings for the demo catalog)
+COLLECTIONS = [
+    ("everyday-sneakers", "Everyday Sneakers", "Sneakers for daily wear — comfortable, versatile and built to be worn a lot. Pick by how you'll use them, not just how they look.", "Commuters", "https://picsum.photos/seed/col-sneakers/800/400", ["air-max-runner-2024", "retro-low-top-sneaker", "court-classic-sneaker", "trail-running-shoes"], 1),
+    ("student-setup", "Student Setup", "The essentials for a focused year: a dependable laptop, quiet earbuds, a carry-all backpack and comfortable joggers.", "Students", "https://picsum.photos/seed/col-student/800/400", ["ultrabook-laptop-14", "pro-wireless-earbuds", "slim-backpack", "everyday-joggers"], 2),
+    ("work-from-home", "Work From Home", "Everything that makes a home workspace calmer and more productive — desk-ready tech and comfort basics.", "Remote workers", "https://picsum.photos/seed/col-wfh/800/400", ["ultrabook-laptop-14", "smart-watch-series-9", "bluetooth-speaker-360", "coffee-grinder-pro"], 3),
+    ("budget-tech", "Budget Tech", "Genuinely useful tech that will not blow a tight budget — picks under roughly $150 on this catalog.", "Budget shoppers", "https://picsum.photos/seed/col-budget/800/400", ["pro-wireless-earbuds", "bluetooth-speaker-360"], 4),
+    ("creator-gear", "Creator Gear", "Reliable gear for recording, filming and staying on top of a creator workflow.", "Creators", "https://picsum.photos/seed/col-creator/800/400", ["smart-watch-series-9", "bluetooth-speaker-360", "pro-wireless-earbuds", "slim-backpack"], 5),
+    ("home-essentials", "Home Essentials", "Thoughtful upgrades for the kitchen and everyday home routines.", "Home cooks", "https://picsum.photos/seed/col-home/800/400", ["cast-iron-skillet", "coffee-grinder-pro", "slim-backpack", "bluetooth-speaker-360"], 6),
+]
+
+GUIDES = [
+    ("how-to-choose-a-laptop-for-university", "How to choose a laptop for university",
+     "Buying a laptop for studies is about matching three things: the course workload, your daily carry, and a budget you can defend. This guide walks through what actually matters.",
+     "## How to choose a laptop for university\n\nA university laptop has to survive four things: all-day classes, group work, late-night assignments and being carried everywhere.\n\n### What to look for\n- **Portability**: a 1.3–1.6 kg 14-inch machine is a realistic daily carry.\n- **Battery**: aim for a laptop that reliably lasts a full day (8+ hours of real use).\n- **RAM**: 16 GB keeps dozens of tabs and a word processor comfortable.\n- **Performance**: for essays, spreadsheets and browsing, a modern mid-range CPU is plenty. Video editing or engineering software shifts the priority to GPU and cores.\n\n### Common mistakes\n- Paying for a gaming GPU that adds weight and drains battery if you only write essays.\n- Ignoring ports — a university desk still loves USB-A and HDMI.\n\n### Bottom line\nMatch performance to your major, not to the sales pitch. On this catalog, the **Ultrabook Laptop 14** is the balanced pick; a **Slim Backpack** pairs with it for the daily carry.",
+     "electronics", None, 1),
+    ("wireless-earbuds-what-to-look-for", "Wireless earbuds: what actually matters",
+     "Noise cancelling, battery life, fit, call quality — the earbud spec sheet is confusing. Here is what changes the experience day to day.",
+     "## Wireless earbuds: what to look for\n\n\n### What to look for\n- **Fit**: if the seal is right, sound is better and noise-cancelling works. Try before you decide.\n- **Battery**: total time including the case matters more than a single charge number.\n- **Call quality**: microphones in a quiet room differ a lot from the real street.\n- **ANC**: only worth money if you ride transit, fly, or work in noise.\n\n### Common mistakes\n- Choosing by a single spec (e.g. '30 hours') without checking real-world case cycles.\n\n### Bottom line\nDecide your priority: silence (ANC) vs battery vs calls. The **Pro Wireless Earbuds** on this catalog cover all three acceptably for the price.",
+     "electronics", None, 2),
+    ("choosing-running-sneakers", "Choosing running sneakers for your routine",
+     "Daily jogs, trail runs or court sessions need different shoes. This guide helps you match footwear to how you actually move.",
+     "## Choosing running sneakers\n\n### What to look for\n- **Purpose**: road shoes cushion; trail shoes grip; court classics suit casual every-day wear.\n- **Fit**: your shoes should hold the heel and leave a thumb-width at the toe.\n- **Use case**: if you run twice a week, a do-everything trainer is enough.\n\n### Common mistakes\n- Buying purely on looks — colour fades in a season, fit is with you every run.\n\n### Bottom line\nMatch the shoe to your routine. **Air Max Runner 2024** is the cushioned daily trainer; **Trail Running Shoes** add grip when you leave the pavement; **Court Classic** covers casual days.",
+     "sneakers", None, 3),
+    ("work-from-home-space", "Setting up a calm work-from-home space",
+     "A productive home office is mostly about reducing friction: a comfortable place to sit, fewer distractions and tools that just work.",
+     "## Setting up a work-from-home space\n\n### What to look for\n- **Silence**: ANC earbuds transform a noisy home into a meeting-friendly space.\n- **Focus**: a dedicated desk zone and one speaker for music, rather than five gadgets.\n- **Routine**: a morning ritual (coffee, walk, plan) beats any gadget.\n\n### Bottom line\nStart with the laptop and earbuds, then add comfort — the **Work From Home** collection on ClickShop gathers sensible picks in one place.",
+     "electronics", None, 4),
+    ("wardrobe-basics", "Wardrobe basics: what to prioritise first",
+     "A small, useful wardrobe beats a big unused one. Start with pieces that combine with each other and last.",
+     "## Wardrobe basics\n\n### What to look for\n- **Versatility**: neutrals and classic cuts combine with everything.\n- **Quality**: heavier cotton, real denim and good stitching age well.\n- **Layering**: a hoodie, denim jacket and joggers cover most seasons.\n\n### Common mistakes\n- Buying a statement piece before the foundations exist.\n\n### Bottom line\nFoundations first: **Classic Cotton Hoodie**, **Denim Jacket** and **Everyday Joggers** combine into months of outfits.",
+     "fashion", None, 5),
+]
 
 
 async def seed() -> None:
@@ -103,6 +137,47 @@ async def seed() -> None:
             else:
                 for key, value in data.items():
                     setattr(product, key, value)
+
+        # Curated collections — upserted by slug, membership refreshed so the
+        # demo never shows a collection out of sync with its products.
+        product_rows = await db.scalars(select(Product))
+        product_by_slug = {p.slug: p for p in product_rows}
+        for slug, name, desc, tag, image, product_slugs, sort_order in COLLECTIONS:
+            collection = await db.scalar(select(Collection).where(Collection.slug == slug))
+            if collection is None:
+                collection = Collection(
+                    slug=slug, name=name, description=desc, tag=tag,
+                    image=image, sort_order=sort_order,
+                )
+                db.add(collection)
+            else:
+                collection.name = name
+                collection.description = desc
+                collection.tag = tag
+                collection.image = image
+                collection.sort_order = sort_order
+                collection.is_active = True
+            members = [product_by_slug[s] for s in product_slugs if s in product_by_slug]
+            collection.products = members
+
+        # Buying guides — upserted by slug.
+        for slug, title, summary, body, cat_slug, image, order in GUIDES:
+            guide = await db.scalar(select(Guide).where(Guide.slug == slug))
+            if guide is None:
+                db.add(
+                    Guide(
+                        slug=slug, title=title, summary=summary, body=body,
+                        category_slug=cat_slug, image=image,
+                        published_at=datetime.now(UTC),
+                    )
+                )
+            else:
+                guide.title = title
+                guide.summary = summary
+                guide.body = body
+                guide.category_slug = cat_slug
+                guide.image = image
+                guide.is_active = True
 
         await db.commit()
 

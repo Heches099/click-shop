@@ -8,4 +8,5 @@ abstract class AuthRepository {
   Future<Either<Failure, AppUser>> signInWithGoogle();
   Future<Either<Failure, void>> signOut();
   Future<Either<Failure, AppUser?>> getCurrentUser();
+  Future<Either<Failure, AppUser?>> refreshProfile();
 }

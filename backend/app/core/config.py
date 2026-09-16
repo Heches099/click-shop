@@ -22,6 +22,11 @@ class Settings(BaseSettings):
     admin_email: str = "admin@clickshop.com"
     admin_password: str = "ChangeMe123!"
 
+    # Comma-separated list of emails that are automatically granted the owner/
+    # admin role at sign-up / sign-in. Server-side only — never exposed to the
+    # client, and never derived from anything the app sends.
+    admin_emails: str = ""
+
     stripe_secret_key: str = ""
     stripe_webhook_secret: str = ""
 
@@ -57,6 +62,10 @@ class Settings(BaseSettings):
     @property
     def cors_origin_list(self) -> list[str]:
         return [o.strip() for o in self.cors_origins.split(",") if o.strip()]
+
+    @property
+    def admin_emails_list(self) -> list[str]:
+        return [e.strip().lower() for e in self.admin_emails.split(",") if e.strip()]
 
     @property
     def stripe_enabled(self) -> bool:
