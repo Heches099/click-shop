@@ -16,6 +16,7 @@ import '../../auth/providers/auth_provider.dart';
 import '../../cart/providers/cart_provider.dart';
 import '../../orders/providers/orders_provider.dart';
 import '../../core/widgets/premium_button.dart';
+import '../../../l10n/app_localizations.dart';
 
 class CheckoutScreen extends ConsumerStatefulWidget {
   const CheckoutScreen({super.key});
@@ -79,12 +80,13 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     final user = ref.watch(authProvider).whenOrNull(data: (u) => u);
     _seedAddresses(user);
     final cartItems = ref.watch(cartProvider);
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
-        title: const Text('Checkout', style: AppTypography.h2),
+        title: Text(l10n.checkoutTitle, style: AppTypography.h2),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded),
           onPressed: () => Navigator.pop(context),
@@ -106,7 +108,8 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   }
 
   Widget _buildPremiumStepper() {
-    final steps = ['Address', 'Payment', 'Review'];
+        final l10n = AppLocalizations.of(context)!;
+        final steps = [l10n.checkoutShipping, l10n.checkoutPayment, l10n.checkoutReview];
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
       child: Column(
@@ -302,6 +305,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   }
 
   Future<void> _addNewAddress() async {
+    final l10n = AppLocalizations.of(context)!;
     final name = TextEditingController();
     final phone = TextEditingController();
     final street = TextEditingController();
@@ -342,14 +346,14 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                 const SizedBox(height: 24),
                 const Text('Add New Address', style: AppTypography.h2),
                 const SizedBox(height: 20),
-                _buildField(name, 'Full Name'),
-                _buildField(phone, 'Phone', keyboardType: TextInputType.phone),
-                _buildField(street, 'Street Address'),
-                _buildField(city, 'City'),
-                _buildField(stateCtrl, 'State'),
-                _buildField(zip, 'ZIP Code',
+                _buildField(name, l10n.checkoutFullName),
+                _buildField(phone, l10n.checkoutPhone, keyboardType: TextInputType.phone),
+                _buildField(street, l10n.checkoutAddress),
+                _buildField(city, l10n.checkoutCity),
+                _buildField(stateCtrl, l10n.checkoutState),
+                _buildField(zip, l10n.checkoutZip,
                     keyboardType: TextInputType.number),
-                _buildField(country, 'Country'),
+                _buildField(country, l10n.checkoutCountry),
                 const SizedBox(height: 24),
                 ElevatedButton(
                   onPressed: () {
@@ -414,18 +418,29 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   }
 
   Widget _buildPaymentStep({required Key key}) {
+    final l10n = AppLocalizations.of(context)!;
     return ListView(
       key: key,
       padding: const EdgeInsets.symmetric(horizontal: 24),
       children: [
-        const Text('How would you like to pay?', style: AppTypography.h2),
+        Text(l10n.checkoutContact, style: AppTypography.h2),
         const SizedBox(height: 24),
         ..._payments.asMap().entries.map((entry) => Padding(
               padding: const EdgeInsets.only(bottom: 16),
-              child: _buildPaymentOption(entry.value, entry.key),
+              child: _buildPaymentOption(_localizedPaymentLabel(entry.key), entry.key),
             )),
       ],
     );
+  }
+
+  String _localizedPaymentLabel(int index) {
+    final l10n = AppLocalizations.of(context)!;
+    switch (index) {
+      case 0: return l10n.checkoutPaymentApplePay;
+      case 1: return l10n.checkoutPaymentCreditCard;
+      case 2: return l10n.checkoutPaymentPayPal;
+      default: return _payments[index];
+    }
   }
 
   Widget _buildPaymentOption(String label, int index) {
@@ -475,6 +490,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   }
 
   Widget _buildReviewStep({required Key key}) {
+    final l10n = AppLocalizations.of(context)!;
     final items = ref.watch(cartProvider);
     final subtotal = ref.watch(cartProvider.notifier).subtotal;
     final shipping = subtotal > 500 ? 0.0 : 15.0;
@@ -484,7 +500,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       key: key,
       padding: const EdgeInsets.symmetric(horizontal: 24),
       children: [
-        const Text('Order Summary', style: AppTypography.titleLarge),
+        Text(l10n.checkoutOrderSummary, style: AppTypography.titleLarge),
         const SizedBox(height: 16),
         Container(
           padding: const EdgeInsets.all(20),
@@ -514,22 +530,21 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
               const Padding(
                   padding: EdgeInsets.symmetric(vertical: 12),
                   child: Divider()),
-              _buildSummaryRow('Subtotal', '\$${subtotal.toStringAsFixed(2)}'),
-              _buildSummaryRow('Shipping',
-                  shipping == 0 ? 'Free' : '\$${shipping.toStringAsFixed(2)}'),
+              _buildSummaryRow(l10n.cartSubtotal, '\$${subtotal.toStringAsFixed(2)}'),
+              _buildSummaryRow(l10n.cartShipping,
+                  shipping == 0 ? l10n.cartShippingFree : '\$${shipping.toStringAsFixed(2)}'),
               const Padding(
                   padding: EdgeInsets.symmetric(vertical: 12),
                   child: Divider()),
-              _buildSummaryRow('Total', '\$${total.toStringAsFixed(2)}',
+              _buildSummaryRow(l10n.cartTotal, '\$${total.toStringAsFixed(2)}',
                   isTotal: true),
             ],
           ),
         ),
         const SizedBox(height: 24),
-        _buildInfoCard(
-            'Deliver to', _addresses[_selectedAddressIndex].fullAddress),
+        _buildInfoCard(l10n.checkoutShipping, _addresses[_selectedAddressIndex].fullAddress),
         const SizedBox(height: 16),
-        _buildInfoCard('Pay with', _payments[_selectedPaymentIndex]),
+        _buildInfoCard(l10n.checkoutPayment, _localizedPaymentLabel(_selectedPaymentIndex)),
         _buildReferralInfo(),
         const SizedBox(height: 24),
       ],
@@ -608,6 +623,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   }
 
   Widget _buildBottomAction() {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: EdgeInsets.fromLTRB(
         AppResponsive.scale(context, 24),
@@ -628,10 +644,10 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                 ? _nextStep
                 : _placeOrder,
         text: _placingOrder
-            ? 'Processing…'
+            ? l10n.checkoutProcessing
             : _currentStep < 2
-                ? 'Continue'
-                : 'Place Order',
+                ? l10n.checkoutNext
+                : l10n.checkoutPlaceOrder,
         loading: _placingOrder,
       ),
     );

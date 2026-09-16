@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../config/design_tokens.dart';
 import '../../../core/utils/responsive.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../home/providers/home_provider.dart';
 import '../../home/screens/home_screen.dart';
 import '../../search/screens/search_screen.dart';
@@ -29,6 +30,7 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> {
     final currentIndex = ref.watch(mainTabIndexProvider);
     final savedCount =
         ref.watch(savedProvider).asData?.value.length ?? 0;
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
       body: IndexedStack(
@@ -41,7 +43,7 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> {
           vertical: 12,
         ),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).colorScheme.surface,
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.05),
@@ -54,18 +56,18 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> {
           child: Row(
             children: [
               Expanded(
-                  child: _buildNavItem(
-                      currentIndex, 0, Icons.home_rounded, 'Home')),
+                  child: _buildNavItem(currentIndex, 0, Icons.home_rounded,
+                      l10n.navHome)),
               Expanded(
-                  child: _buildNavItem(
-                      currentIndex, 1, Icons.search_rounded, 'Search')),
+                  child: _buildNavItem(currentIndex, 1, Icons.search_rounded,
+                      l10n.navSearch)),
               Expanded(
-                  child: _buildNavItem(
-                      currentIndex, 2, Icons.bookmark_outline_rounded, 'Saved',
+                  child: _buildNavItem(currentIndex, 2,
+                      Icons.bookmark_outline_rounded, l10n.navSaved,
                       badgeCount: savedCount)),
               Expanded(
-                  child: _buildNavItem(
-                      currentIndex, 3, Icons.person_outline_rounded, 'Profile')),
+                  child: _buildNavItem(currentIndex, 3,
+                      Icons.person_outline_rounded, l10n.navProfile)),
             ],
           ),
         ),

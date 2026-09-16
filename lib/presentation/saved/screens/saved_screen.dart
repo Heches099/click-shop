@@ -7,6 +7,7 @@ import '../../../core/constants/amazon_affiliate.dart';
 import '../../../core/utils/open_link.dart';
 import '../../../core/utils/responsive.dart';
 import '../../../domain/entities/amazon_product.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../core/widgets/smart_image.dart';
 import '../../home/providers/home_provider.dart';
 import '../providers/saved_provider.dart';
@@ -16,6 +17,7 @@ class SavedScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     final savedAsync = ref.watch(savedProvider);
     final saved = savedAsync.asData?.value ?? const <AmazonProduct>[];
 
@@ -23,7 +25,7 @@ class SavedScreen extends ConsumerWidget {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
-        title: const Text('Saved for later', style: AppTypography.h2),
+        title: Text(l10n.savedTitle, style: AppTypography.h2),
         actions: [
           if (saved.isNotEmpty)
             Padding(
@@ -79,6 +81,7 @@ class SavedScreen extends ConsumerWidget {
   }
 
   Widget _buildEmptyState(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -96,14 +99,14 @@ class SavedScreen extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 32),
-          const FadeInUp(
-            child: Text('Nothing saved yet', style: AppTypography.h2),
+          FadeInUp(
+            child: Text(l10n.savedEmpty, style: AppTypography.h2),
           ),
           const SizedBox(height: 8),
           FadeInUp(
             delay: const Duration(milliseconds: 200),
             child: Text(
-                'Tap the bookmark on any Amazon product\nto save it here for later.',
+                l10n.savedEmptySubtitle,
                 textAlign: TextAlign.center,
                 style: AppTypography.bodyLarge
                     .copyWith(color: AppColors.textSecondary)),
@@ -143,6 +146,7 @@ class SavedScreen extends ConsumerWidget {
 
   Widget _buildSavedItem(
       BuildContext context, WidgetRef ref, AmazonProduct product) {
+    final l10n = AppLocalizations.of(context)!;
     final thumb = AppResponsive.thumbnailSize(context);
     return Container(
       margin: const EdgeInsets.only(bottom: 20),
@@ -237,8 +241,8 @@ class SavedScreen extends ConsumerWidget {
                         borderRadius: BorderRadius.circular(10),
                       ),
                       alignment: Alignment.center,
-                      child: const Text(
-                        'Buy on Amazon',
+                      child: Text(
+                        l10n.savedBuyOnAmazon,
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 13,

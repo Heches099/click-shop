@@ -9,6 +9,7 @@ import '../../../core/utils/responsive.dart';
 import '../../../domain/entities/cart_item.dart';
 import '../../home/providers/home_provider.dart';
 import '../providers/cart_provider.dart';
+import '../../../l10n/app_localizations.dart';
 
 class CartScreen extends ConsumerWidget {
   const CartScreen({super.key});
@@ -17,12 +18,13 @@ class CartScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final cartItems = ref.watch(cartProvider);
     final subtotal = ref.watch(cartProvider.notifier).subtotal;
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
-        title: const Text('My Bag', style: AppTypography.h2),
+        title: Text(l10n.cartTitle, style: AppTypography.h2),
         actions: [
           if (cartItems.isNotEmpty)
             Padding(
@@ -56,25 +58,26 @@ class CartScreen extends ConsumerWidget {
   }
 
   void _showClearCartDialog(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Clear Bag?'),
-        content: const Text('Are you sure you want to remove all items?'),
+        title: Text(l10n.clearCartTitle),
+        content: Text(l10n.clearCartMessage),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel',
-                style: TextStyle(color: AppColors.textSecondary)),
+            child: Text(l10n.cancel,
+                style: const TextStyle(color: AppColors.textSecondary)),
           ),
           TextButton(
             onPressed: () {
               ref.read(cartProvider.notifier).clearCart();
               Navigator.pop(context);
             },
-            child: const Text('Clear All',
-                style: TextStyle(
+            child: Text(l10n.cartClearAll,
+                style: const TextStyle(
                     color: AppColors.error, fontWeight: FontWeight.bold)),
           ),
         ],
@@ -83,6 +86,7 @@ class CartScreen extends ConsumerWidget {
   }
 
   Widget _buildEmptyCart(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -100,14 +104,13 @@ class CartScreen extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 32),
-          const FadeInUp(
-            child: Text('Your bag is empty', style: AppTypography.h2),
+          FadeInUp(
+            child: Text(l10n.cartEmpty, style: AppTypography.h2),
           ),
           const SizedBox(height: 8),
           FadeInUp(
             delay: const Duration(milliseconds: 200),
-            child: Text(
-                'Looks like you haven\'t added\nanything to your bag yet.',
+            child: Text(l10n.cartEmptySubtitle,
                 textAlign: TextAlign.center,
                 style: AppTypography.bodyLarge
                     .copyWith(color: AppColors.textSecondary)),
@@ -251,6 +254,7 @@ class CartScreen extends ConsumerWidget {
   }
 
   Widget _buildSummary(BuildContext context, double subtotal) {
+    final l10n = AppLocalizations.of(context)!;
     final shipping = subtotal > 500 ? 0.0 : 15.0;
     final total = subtotal + shipping;
 
@@ -276,22 +280,22 @@ class CartScreen extends ConsumerWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          _buildSummaryRow('Subtotal', '\$${subtotal.toStringAsFixed(2)}'),
+          _buildSummaryRow(l10n.cartSubtotal, '\$${subtotal.toStringAsFixed(2)}'),
           const SizedBox(height: 12),
-          _buildSummaryRow('Shipping',
-              shipping == 0 ? 'Free' : '\$${shipping.toStringAsFixed(2)}'),
+          _buildSummaryRow(l10n.cartShipping,
+              shipping == 0 ? l10n.cartShippingFree : '\$${shipping.toStringAsFixed(2)}'),
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 20),
             child: Divider(color: AppColors.divider),
           ),
-          _buildSummaryRow('Total', '\$${total.toStringAsFixed(2)}',
+          _buildSummaryRow(l10n.cartTotal, '\$${total.toStringAsFixed(2)}',
               isTotal: true),
           const SizedBox(height: 28),
           FadeInUp(
             delay: const Duration(milliseconds: 400),
             child: PremiumPressableButton(
               onPressed: () => context.push('/checkout'),
-              text: 'Checkout',
+              text: l10n.cartCheckout,
             ),
           ),
         ],

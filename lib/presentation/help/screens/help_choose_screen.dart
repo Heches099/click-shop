@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../config/design_tokens.dart';
 import '../../../core/services/events/event_tracker.dart';
 import '../../../core/utils/open_link.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../home/widgets/product_card.dart';
 import '../../search/providers/catalog_search_provider.dart';
 
@@ -69,12 +70,13 @@ class _HelpMeChooseScreenState extends ConsumerState<HelpMeChooseScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
         backgroundColor: AppColors.background,
         elevation: 0,
-        title: const Text('Help me choose',
+        title: Text(l10n.helpTitle,
             style: AppTypography.titleLarge),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded),
@@ -87,13 +89,12 @@ class _HelpMeChooseScreenState extends ConsumerState<HelpMeChooseScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Answer two quick questions and we will line up real options '
-              'from our catalog. No rankings, no pressure — just what fits.',
+              l10n.helpSubtitle,
               style: AppTypography.bodyMedium
                   .copyWith(color: AppColors.textSecondary, height: 1.5),
             ),
             const SizedBox(height: AppSpacing.l),
-            Text('1. What do you want to buy?',
+            Text(l10n.helpWhatBuying,
                 style: AppTypography.titleMedium),
             const SizedBox(height: 10),
             TextField(
@@ -113,7 +114,7 @@ class _HelpMeChooseScreenState extends ConsumerState<HelpMeChooseScreen> {
               ),
             ),
             const SizedBox(height: AppSpacing.l),
-            Text('2. Budget',
+            Text(l10n.helpBudget,
                 style: AppTypography.titleMedium),
             const SizedBox(height: 10),
             Wrap(
@@ -144,7 +145,7 @@ class _HelpMeChooseScreenState extends ConsumerState<HelpMeChooseScreen> {
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16)),
                 ),
-                child: const Text('Show me options',
+                child: Text(l10n.helpFinish,
                     style:
                         TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
               ),
@@ -158,10 +159,13 @@ class _HelpMeChooseScreenState extends ConsumerState<HelpMeChooseScreen> {
   }
 
   Widget _buildResults() {
+    final l10n = AppLocalizations.of(context)!;
     final provider = catalogSearchProvider((
       query: _lastQuery!,
       minPrice: _lastMin,
       maxPrice: _lastMax,
+      sort: 'Popularity',
+      brands: const [],
     ));
     final results = ref.watch(provider);
     return Column(
@@ -171,12 +175,12 @@ class _HelpMeChooseScreenState extends ConsumerState<HelpMeChooseScreen> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              'Options for "$_lastQuery"',
+              l10n.helpResults,
               style: AppTypography.titleMedium,
             ),
             TextButton(
               onPressed: () => context.push('/search?q=${Uri.encodeQueryComponent(_lastQuery!)}'),
-              child: const Text('Open search'),
+              child: Text(l10n.viewAll),
             ),
           ],
         ),
@@ -186,7 +190,7 @@ class _HelpMeChooseScreenState extends ConsumerState<HelpMeChooseScreen> {
                 padding: EdgeInsets.all(24),
                 child: Center(child: CircularProgressIndicator()),
               ),
-          error: (e, _) => const Text('Could not search right now.',
+          error: (e, _) => Text(l10n.errorGeneric,
               style: AppTypography.bodyMedium),
           data: (products) {
             if (products.isEmpty) {
@@ -221,6 +225,7 @@ class _EmptyResults extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     final price = minPrice != null && maxPrice != null
         ? ' between \$${minPrice!.toStringAsFixed(0)} and '
             '\$${maxPrice!.toStringAsFixed(0)}'
@@ -241,7 +246,7 @@ class _EmptyResults extends ConsumerWidget {
               size: 40, color: AppColors.textMuted),
           const SizedBox(height: 10),
           Text(
-            'Nothing in the catalog matches "$query"$price right now.',
+            l10n.helpNoResults,
             textAlign: TextAlign.center,
             style: AppTypography.bodyMedium
                 .copyWith(color: AppColors.textSecondary, height: 1.5),

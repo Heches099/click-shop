@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../config/design_tokens.dart';
 import '../../../domain/usecases/discovery_usecase.dart';
 import '../../../core/services/service_locator.dart';
+import '../../../l10n/app_localizations.dart';
 
 /// Contact form — stores the message in the owner inbox (backend `/contact`).
 /// Works even when no email provider is configured. Requests are rate-limited
@@ -21,6 +22,7 @@ class _ContactScreenState extends ConsumerState<ContactScreen> {
   final _subject = TextEditingController();
   final _message = TextEditingController();
   bool _sending = false;
+  bool _success = false;
   String? _result;
 
   @override
@@ -45,25 +47,28 @@ class _ContactScreenState extends ConsumerState<ContactScreen> {
       message: _message.text.trim(),
     );
     if (!mounted) return;
+    final l10n = AppLocalizations.of(context)!;
     setState(() {
       _sending = false;
+      _success = ok;
       if (ok) {
         _message.clear();
-        _result = 'Message sent. We will reply to your email as soon as we can.';
+        _result = l10n.contactSuccess;
       } else {
-        _result = 'That did not go through. Please try again in a moment.';
+        _result = l10n.contactError;
       }
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
         backgroundColor: AppColors.background,
         elevation: 0,
-        title: const Text('Contact us', style: AppTypography.titleLarge),
+        title: Text(l10n.contactTitle, style: AppTypography.titleLarge),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded),
           onPressed: () => Navigator.pop(context),
@@ -85,7 +90,7 @@ class _ContactScreenState extends ConsumerState<ContactScreen> {
               const SizedBox(height: AppSpacing.l),
               TextFormField(
                 controller: _name,
-                decoration: _input('Your name'),
+                decoration: _input(l10n.contactName),
                 textInputAction: TextInputAction.next,
                 validator: (v) =>
                     (v == null || v.trim().isEmpty) ? 'Please add your name' : null,
@@ -93,7 +98,7 @@ class _ContactScreenState extends ConsumerState<ContactScreen> {
               const SizedBox(height: 16),
               TextFormField(
                 controller: _email,
-                decoration: _input('Email address'),
+                decoration: _input(l10n.contactEmail),
                 keyboardType: TextInputType.emailAddress,
                 textInputAction: TextInputAction.next,
                 validator: (v) {
@@ -106,13 +111,13 @@ class _ContactScreenState extends ConsumerState<ContactScreen> {
               const SizedBox(height: 16),
               TextFormField(
                 controller: _subject,
-                decoration: _input('Subject (optional)'),
+                decoration: _input(l10n.contactSubject),
                 textInputAction: TextInputAction.next,
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _message,
-                decoration: _input('Message'),
+                decoration: _input(l10n.contactMessage),
                 minLines: 5,
                 maxLines: 10,
                 validator: (v) => (v == null || v.trim().length < 10)
@@ -124,9 +129,7 @@ class _ContactScreenState extends ConsumerState<ContactScreen> {
                 Text(
                   _result!,
                   style: AppTypography.bodyMedium.copyWith(
-                    color: (_result!.startsWith('Message'))
-                        ? const Color(0xFF2E7D32)
-                        : AppColors.error,
+                    color: _success ? const Color(0xFF2E7D32) : AppColors.error,
                   ),
                 ),
                 const SizedBox(height: AppSpacing.m),
@@ -149,7 +152,7 @@ class _ContactScreenState extends ConsumerState<ContactScreen> {
                           child: CircularProgressIndicator(
                               strokeWidth: 2, color: Colors.white),
                         )
-                      : const Text('Send message',
+                      : Text(l10n.contactSend,
                           style: TextStyle(
                               color: Colors.white, fontWeight: FontWeight.bold)),
                 ),

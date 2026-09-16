@@ -2,30 +2,31 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../config/business_info.dart';
 import '../../../config/design_tokens.dart';
+import '../../../l10n/app_localizations.dart';
 
 /// Honest, consistent site footer: trust links + contact + disclosure.
 class FooterBlock extends StatelessWidget {
   const FooterBlock({super.key});
 
-  static const _links = <(String, String)>[
-    ('Collections', '/collections'),
-    ('Guides', '/guides'),
-    ('Compare', '/compare'),
-    ('Help me choose', '/help-me-choose'),
-    ('Affiliate program', '/affiliate'),
-  ];
-
-  static const _info = <(String, String)>[
-    ('About', '/about'),
-    ('Contact', '/contact'),
-    ('Returns', '/returns'),
-    ('Shipping', '/shipping'),
-    ('Privacy', '/privacy'),
-    ('Terms', '/terms'),
-  ];
-
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final links = <(String, String)>[
+      (l10n.profileCollections, '/collections'),
+      (l10n.profileGuides, '/guides'),
+      (l10n.profileCompare, '/compare'),
+      (l10n.profileHelpChoose, '/help-me-choose'),
+      (l10n.profileAffiliate, '/affiliate'),
+    ];
+    final info = <(String, String)>[
+      (l10n.aboutTitle, '/about'),
+      (l10n.profileContact, '/contact'),
+      (l10n.returnsTitle, '/returns'),
+      (l10n.shippingTitle, '/shipping'),
+      (l10n.profilePrivacy, '/privacy'),
+      (l10n.profileTerms, '/terms'),
+    ];
+
     return Container(
       width: double.infinity,
       color: const Color(0xFF121212),
@@ -41,9 +42,9 @@ class FooterBlock extends StatelessWidget {
             style: AppTypography.caption.copyWith(color: Colors.white70),
           ),
           const SizedBox(height: 20),
-          _linkCol('Shop', _links, context),
+          _linkCol(l10n.footerShop, links, context),
           const SizedBox(height: 18),
-          _linkCol('Store info', _info, context),
+          _linkCol(l10n.profileStoreInfo, info, context),
           const SizedBox(height: 18),
           Text('Email: ${BusinessInfo.supportEmail}',
               style: AppTypography.caption.copyWith(color: Colors.white70)),

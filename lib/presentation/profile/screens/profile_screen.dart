@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../config/design_tokens.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../core/widgets/smart_image.dart';
 import '../../../domain/entities/user.dart';
 import '../../affiliate/providers/affiliate_provider.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../home/providers/home_provider.dart';
+import '../../settings/widgets/language_selector.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -14,13 +16,14 @@ class ProfileScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final authState = ref.watch(authProvider);
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
       backgroundColor: AppColors.background,
       body: CustomScrollView(
         physics: const BouncingScrollPhysics(),
         slivers: [
-          _buildAppBar(),
+          _buildAppBar(l10n),
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
@@ -29,10 +32,10 @@ class ProfileScreen extends ConsumerWidget {
                   height: 320,
                   child: Center(child: CircularProgressIndicator()),
                 ),
-                error: (error, _) => _buildErrorState(context, error),
+                error: (error, _) => _buildErrorState(context, error, l10n),
                 data: (user) {
-                  if (user == null) return _buildSignedOutState(context);
-                  return _buildSignedInContent(context, ref, user);
+                  if (user == null) return _buildSignedOutState(context, l10n);
+                  return _buildSignedInContent(context, ref, user, l10n);
                 },
               ),
             ),
@@ -43,7 +46,7 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildAppBar() {
+  Widget _buildAppBar(AppLocalizations l10n) {
     return SliverAppBar(
       pinned: true,
       centerTitle: false,
@@ -57,100 +60,103 @@ class ProfileScreen extends ConsumerWidget {
             fit: BoxFit.contain,
           ),
           const SizedBox(width: 10),
-          Text('Profile', style: AppTypography.titleLarge),
+          Text(l10n.profileTitle, style: AppTypography.titleLarge),
         ],
       ),
+      actions: const [
+        Padding(
+          padding: EdgeInsets.only(right: 12),
+          child: Center(child: LanguageSelector(compact: true)),
+        ),
+      ],
     );
   }
 
   Widget _buildSignedInContent(
-      BuildContext context, WidgetRef ref, AppUser user) {
+      BuildContext context, WidgetRef ref, AppUser user, AppLocalizations l10n) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildUserHeader(user),
         const SizedBox(height: 24),
-        _buildAffiliateStatsRow(ref),
+        _buildAffiliateStatsRow(ref, l10n),
         const SizedBox(height: 32),
-        _buildMenuSection('Quick Access', [
+        _buildMenuSection(l10n.profileQuickAccess, [
           _MenuItem(
             icon: Icons.compare_arrows_rounded,
-            title: 'Compare',
+            title: l10n.profileCompare,
             onTap: () => context.push('/compare'),
           ),
           _MenuItem(
             icon: Icons.bookmark_outline_rounded,
-            title: 'Saved for later',
+            title: l10n.profileSaved,
             onTap: () => ref.read(mainTabIndexProvider.notifier).state = 2,
           ),
           _MenuItem(
             icon: Icons.rocket_launch_rounded,
-            title: 'Affiliate Program',
+            title: l10n.profileAffiliate,
             onTap: () => context.push('/affiliate'),
           ),
         ]),
         const SizedBox(height: 32),
-        _buildMenuSection('Discover', [
+        _buildMenuSection(l10n.profileDiscover, [
           _MenuItem(
             icon: Icons.collections_bookmark_outlined,
-            title: 'Collections',
+            title: l10n.profileCollections,
             onTap: () => context.push('/collections'),
           ),
           _MenuItem(
             icon: Icons.menu_book_outlined,
-            title: 'Buying guides',
+            title: l10n.profileGuides,
             onTap: () => context.push('/guides'),
           ),
           _MenuItem(
             icon: Icons.assistant_outlined,
-            title: 'Help me choose',
+            title: l10n.profileHelpChoose,
             onTap: () => context.push('/help-me-choose'),
           ),
           _MenuItem(
             icon: Icons.history_rounded,
-            title: 'Orders',
+            title: l10n.profileOrders,
             onTap: () => context.push('/orders'),
           ),
         ]),
         const SizedBox(height: 32),
         if (user.isAdmin) ...[
-          _buildMenuSection('Owner', [
+          _buildMenuSection(l10n.profileOwner, [
             _MenuItem(
               icon: Icons.dashboard_customize_outlined,
-              title: 'Owner dashboard',
+              title: l10n.profileDashboard,
               onTap: () => context.push('/owner'),
             ),
           ]),
           const SizedBox(height: 32),
         ],
-        _buildMenuSection('Store info', [
+        _buildMenuSection(l10n.profileStoreInfo, [
           _MenuItem(
             icon: Icons.info_outline_rounded,
-            title: 'About ClickShop',
+            title: l10n.profileAbout,
             onTap: () => context.push('/about'),
           ),
           _MenuItem(
             icon: Icons.mail_outline_rounded,
-            title: 'Contact us',
+            title: l10n.profileContact,
             onTap: () => context.push('/contact'),
           ),
           _MenuItem(
             icon: Icons.lock_outline_rounded,
-            title: 'Privacy policy',
+            title: l10n.profilePrivacy,
             onTap: () => context.push('/privacy'),
           ),
           _MenuItem(
             icon: Icons.description_outlined,
-            title: 'Terms of service',
+            title: l10n.profileTerms,
             onTap: () => context.push('/terms'),
           ),
         ]),
         const SizedBox(height: 32),
         Center(
-          child: _buildLogoutButton(
-            context,
-            ref,
-          ),
+          child: _buildLogoutButton(context, ref, l10n),
         ),
       ],
     );
@@ -249,18 +255,18 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildAffiliateStatsRow(WidgetRef ref) {
+  Widget _buildAffiliateStatsRow(WidgetRef ref, AppLocalizations l10n) {
     final statsAsync = ref.watch(affiliateStatsProvider);
 
     return statsAsync.when(
       data: (stats) => Row(
         children: [
-          _buildStatItem('CLICKS', '${stats.clicks}'),
+          _buildStatItem(l10n.profileClicks, '${stats.clicks}'),
           const SizedBox(width: 12),
-          _buildStatItem('SALES', '${stats.sales}'),
+          _buildStatItem(l10n.profileSales, '${stats.sales}'),
           const SizedBox(width: 12),
           _buildStatItem(
-            'EARNED',
+            l10n.profileEarned,
             '\$${stats.commission.toStringAsFixed(0)}',
             isPremium: true,
           ),
@@ -375,7 +381,7 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildSignedOutState(BuildContext context) {
+  Widget _buildSignedOutState(BuildContext context, AppLocalizations l10n) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 28),
@@ -388,10 +394,10 @@ class ProfileScreen extends ConsumerWidget {
         children: [
           Image.asset('assets/icons/logo.png', height: 72, fit: BoxFit.contain),
           const SizedBox(height: 24),
-          Text('Sign in required', style: AppTypography.titleLarge),
+          Text(l10n.authLoginTitle, style: AppTypography.titleLarge),
           const SizedBox(height: 8),
           Text(
-            'Access your orders, wishlist and affiliate dashboard by signing in to your account.',
+            l10n.profileSignedOut,
             textAlign: TextAlign.center,
             style: AppTypography.bodyMedium.copyWith(
               color: AppColors.textSecondary,
@@ -410,9 +416,9 @@ class ProfileScreen extends ConsumerWidget {
                   borderRadius: BorderRadius.circular(16),
                 ),
               ),
-              child: const Text(
-                'Sign In',
-                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+              child: Text(
+                l10n.profileSignIn,
+                style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
               ),
             ),
           ),
@@ -429,9 +435,9 @@ class ProfileScreen extends ConsumerWidget {
                   borderRadius: BorderRadius.circular(16),
                 ),
               ),
-              child: const Text(
-                'Create Account',
-                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+              child: Text(
+                l10n.authSignUpCreate,
+                style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
               ),
             ),
           ),
@@ -440,7 +446,7 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildErrorState(BuildContext context, Object error) {
+  Widget _buildErrorState(BuildContext context, Object error, AppLocalizations l10n) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(28),
@@ -454,7 +460,7 @@ class ProfileScreen extends ConsumerWidget {
           const Icon(Icons.cloud_off_rounded,
               color: AppColors.error, size: 44),
           const SizedBox(height: 14),
-          Text('Unable to load profile', style: AppTypography.titleLarge),
+          Text(l10n.errorGeneric, style: AppTypography.titleLarge),
           const SizedBox(height: 8),
           Text(
             '$error',
@@ -467,7 +473,7 @@ class ProfileScreen extends ConsumerWidget {
           OutlinedButton.icon(
             onPressed: () => context.go('/profile'),
             icon: const Icon(Icons.refresh_rounded),
-            label: const Text('Retry'),
+            label: Text(l10n.retry),
             style: OutlinedButton.styleFrom(
               foregroundColor: AppColors.accent,
               side: BorderSide(color: AppColors.accent.withValues(alpha: 0.5)),
@@ -481,11 +487,11 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildLogoutButton(BuildContext context, WidgetRef ref) {
+  Widget _buildLogoutButton(BuildContext context, WidgetRef ref, AppLocalizations l10n) {
     return OutlinedButton.icon(
       onPressed: () => _confirmSignOut(context, ref),
       icon: const Icon(Icons.logout_rounded, size: 18),
-      label: const Text('Sign Out'),
+      label: Text(l10n.profileSignOut),
       style: OutlinedButton.styleFrom(
         foregroundColor: AppColors.error,
         side: BorderSide(color: AppColors.error.withValues(alpha: 0.5)),
@@ -498,32 +504,35 @@ class ProfileScreen extends ConsumerWidget {
   }
 
   Future<void> _confirmSignOut(BuildContext context, WidgetRef ref) async {
+    final l10n = AppLocalizations.of(context)!;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
         backgroundColor: AppColors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text(
-          'Sign out?',
-          style: TextStyle(
+        title: Text(
+          l10n.signOutConfirmTitle,
+          style: const TextStyle(
             color: AppColors.textPrimary,
             fontWeight: FontWeight.w700,
           ),
         ),
-        content: const Text(
-          'You will be signed out of your Click Shop account.',
-          style: TextStyle(color: AppColors.textSecondary),
+        content: Text(
+          l10n.signOutConfirmMessage,
+          style: const TextStyle(color: AppColors.textSecondary),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('CANCEL',
-                style: TextStyle(color: AppColors.textPrimary)),
+            child: Text(
+                l10n.cancel.toUpperCase(),
+                style: const TextStyle(color: AppColors.textPrimary)),
           ),
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text('SIGN OUT',
-                style: TextStyle(color: AppColors.error)),
+            child: Text(
+                l10n.profileSignOut.toUpperCase(),
+                style: const TextStyle(color: AppColors.error)),
           ),
         ],
       ),

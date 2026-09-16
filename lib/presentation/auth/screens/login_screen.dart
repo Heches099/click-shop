@@ -9,6 +9,7 @@ import '../../../core/utils/validators.dart';
 import '../../../core/widgets/animated_press.dart';
 import '../../core/widgets/smart_image.dart';
 import '../providers/auth_provider.dart';
+import '../../../l10n/app_localizations.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key, this.onBack});
@@ -141,6 +142,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   Widget _buildGlassForm(AsyncValue authState) {
+    final l10n = AppLocalizations.of(context)!;
     return ClipRRect(
       borderRadius: BorderRadius.circular(28),
       child: BackdropFilter(
@@ -165,9 +167,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'WELCOME BACK',
-                  style: TextStyle(
+                Text(
+                  l10n.authLoginWelcomeBack,
+                  style: const TextStyle(
                     color: AppColors.secondary,
                     fontWeight: FontWeight.w800,
                     letterSpacing: 4,
@@ -175,9 +177,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   ),
                 ),
                 const SizedBox(height: 10),
-                const Text(
-                  'Sign In',
-                  style: TextStyle(
+                Text(
+                  l10n.authLoginTitle,
+                  style: const TextStyle(
                     color: Colors.white,
                     fontSize: 30,
                     fontWeight: FontWeight.w800,
@@ -197,8 +199,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 TextFormField(
                   controller: _emailController,
                   style: const TextStyle(color: Colors.white, fontSize: 15),
-                  decoration: _inputDecoration(
-                    hint: 'Email',
+decoration: _inputDecoration(
+                    hint: l10n.authLoginEmail,
                     icon: Icons.email_outlined,
                   ),
                   validator: Validators.email,
@@ -210,7 +212,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   obscureText: _obscurePassword,
                   style: const TextStyle(color: Colors.white, fontSize: 15),
                   decoration: _inputDecoration(
-                    hint: 'Password',
+                    hint: l10n.authLoginPassword,
                     icon: Icons.lock_outline,
                   ).copyWith(
                     suffixIcon: IconButton(
@@ -236,9 +238,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     style: TextButton.styleFrom(
                       foregroundColor: Colors.white54,
                     ),
-                    child: const Text(
-                      'Forgot Password?',
-                      style: TextStyle(fontSize: 12.5, letterSpacing: 0.3),
+                    child: Text(
+                      l10n.authLoginForgot,
+                      style: const TextStyle(fontSize: 12.5, letterSpacing: 0.3),
                     ),
                   ),
                 ),
@@ -277,9 +279,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                 strokeWidth: 2.5,
                               ),
                             )
-                          : const Text(
-                              'SIGN IN',
-                              style: TextStyle(
+                          : Text(
+                              l10n.authLoginButton,
+                              style: const TextStyle(
                                 color: Colors.black,
                                 fontWeight: FontWeight.w900,
                                 fontSize: 15,
@@ -344,9 +346,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           ),
                         ),
                         const SizedBox(width: 12),
-                        const Text(
-                          'Continue with Google',
-                          style: TextStyle(
+                        Text(
+                          l10n.authLoginGoogle,
+                          style: const TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.w700,
                             fontSize: 14,
@@ -362,7 +364,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      "Don't have an account?",
+                      l10n.authLoginNoAccount,
                       style: TextStyle(
                         color: Colors.white.withValues(alpha: 0.5),
                         fontSize: 13,
@@ -373,9 +375,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       style: TextButton.styleFrom(
                         foregroundColor: AppColors.secondary,
                       ),
-                      child: const Text(
-                        'Sign Up',
-                        style: TextStyle(
+                      child: Text(
+                        l10n.authLoginSignUp,
+                        style: const TextStyle(
                           fontWeight: FontWeight.w800,
                           fontSize: 13,
                           letterSpacing: 0.3,

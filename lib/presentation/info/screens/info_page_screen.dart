@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../config/business_info.dart';
 import '../../../config/design_tokens.dart';
+import '../../../l10n/app_localizations.dart';
 
 /// Renders one of the trust/info pages (About, Returns, Shipping, Privacy,
 /// Terms) from [BusinessInfo]. Factual copy only — no invented claims.
@@ -10,8 +11,16 @@ class InfoPageScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final entry = BusinessInfo.infoPages[slug];
-    final title = entry?.$1 ?? 'ClickShop';
+    final title = switch (slug) {
+      'about' => l10n.aboutTitle,
+      'returns' => l10n.returnsTitle,
+      'shipping' => l10n.shippingTitle,
+      'privacy' => l10n.privacyTitle,
+      'terms' => l10n.termsTitle,
+      _ => entry?.$1 ?? 'ClickShop',
+    };
     final body = entry?.$2 ?? '';
 
     return Scaffold(

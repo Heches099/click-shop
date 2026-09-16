@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../config/design_tokens.dart';
+import '../../../l10n/app_localizations.dart';
 
 class ProductFilters {
   final RangeValues priceRange;
@@ -37,10 +38,32 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
   static const double _maxPrice = 2000;
   late RangeValues _priceRange = widget.initialFilters.priceRange;
   late String _selectedSort = widget.initialFilters.sort;
-  late final List<String> _selectedBrands = List.of(widget.initialFilters.brands);
+  late final List<String> _selectedBrands =
+      List.of(widget.initialFilters.brands);
+
+  static const _sortKeys = [
+    'Popularity',
+    'Newest',
+    'Price: Low to High',
+    'Price: High to Low'
+  ];
+
+  String _sortLabel(AppLocalizations l10n, String key) {
+    switch (key) {
+      case 'Newest':
+        return l10n.searchSortNewest;
+      case 'Price: Low to High':
+        return l10n.searchSortPriceLow;
+      case 'Price: High to Low':
+        return l10n.searchSortPriceHigh;
+      default:
+        return l10n.searchSortRelevance;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.fromLTRB(24, 12, 24, 40),
       decoration: const BoxDecoration(
@@ -66,7 +89,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('Filters', style: AppTypography.h2),
+                Text(l10n.searchFilters, style: AppTypography.h2),
                 TextButton(
                   onPressed: () {
                     setState(() {
@@ -76,14 +99,14 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                     });
                   },
                   child: Text(
-                      'Reset',
+                      l10n.searchFilterClear,
                       style: TextStyle(
                           color: AppColors.error.withValues(alpha: 0.8))),
                 ),
               ],
             ),
             const SizedBox(height: 24),
-            const Text('Price Range', style: AppTypography.titleLarge),
+            Text(l10n.searchFilterPrice, style: AppTypography.titleLarge),
             const SizedBox(height: 8),
             RangeSlider(
               values: _priceRange,
@@ -99,13 +122,13 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
               onChanged: (values) => setState(() => _priceRange = values),
             ),
             const SizedBox(height: 24),
-            const Text('Brands', style: AppTypography.titleLarge),
+            Text(l10n.searchFilterBrand, style: AppTypography.titleLarge),
             const SizedBox(height: 12),
             _buildBrandChips(),
             const SizedBox(height: 24),
-            const Text('Sort By', style: AppTypography.titleLarge),
+            Text(l10n.searchSortBy, style: AppTypography.titleLarge),
             const SizedBox(height: 12),
-            _buildSortOptions(),
+            _buildSortOptions(l10n),
             const SizedBox(height: 32),
             ElevatedButton(
               onPressed: () => Navigator.pop(
@@ -121,7 +144,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16)),
               ),
-              child: const Text('Apply Filters'),
+              child: Text(l10n.searchFilterApply),
             ),
           ],
         ),
@@ -167,20 +190,15 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
     );
   }
 
-  Widget _buildSortOptions() {
-    const options = [
-      'Popularity',
-      'Newest',
-      'Price: Low to High',
-      'Price: High to Low'
-    ];
+  Widget _buildSortOptions(AppLocalizations l10n) {
     return RadioGroup<String>(
       groupValue: _selectedSort,
       onChanged: (value) => setState(() => _selectedSort = value!),
       child: Column(
-        children: options.map((option) => RadioListTile<String>(
-              title: Text(option, style: AppTypography.bodyMedium),
-              value: option,
+        children: _sortKeys.map((key) => RadioListTile<String>(
+              title: Text(_sortLabel(l10n, key),
+                  style: AppTypography.bodyMedium),
+              value: key,
               contentPadding: EdgeInsets.zero,
               activeColor: AppColors.primary,
             )).toList(),

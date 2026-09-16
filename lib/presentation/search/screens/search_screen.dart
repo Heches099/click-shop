@@ -11,12 +11,14 @@ import '../../../core/utils/open_link.dart';
 import '../../../core/utils/responsive.dart';
 import '../../../core/widgets/amazon_disclosure.dart';
 import '../../../domain/entities/amazon_product.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../core/widgets/amazon_product_card.dart';
 import '../../core/widgets/smart_image.dart';
 import '../../home/providers/amazon_provider.dart';
 import '../../home/widgets/product_card.dart';
 import '../../recent/providers/recent_views_provider.dart';
 import '../providers/catalog_search_provider.dart';
+import '../widgets/filter_bottom_sheet.dart';
 import '../../discover/providers/discover_provider.dart';
 
 /// The Search tab. Honest, server-driven:
@@ -42,6 +44,10 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
 
   Timer? _debounce;
 
+  AppLocalizations? _l10n;
+
+  ProductFilters _filters = const ProductFilters();
+
   @override
   void initState() {
     super.initState();
@@ -56,6 +62,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    _l10n = AppLocalizations.of(context);
     final showResults = _submitted?.trim().isNotEmpty == true;
     SeoService.instance.setPageMeta(robots: showResults ? 'noindex, follow' : '');
   }
@@ -66,6 +73,9 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     _controller.dispose();
     super.dispose();
   }
+
+  AppLocalizations get _strings =>
+      _l10n ?? AppLocalizations.of(context)!;
 
   bool get _typing => _typed.trim().isNotEmpty && _submitted != _typed.trim();
 
@@ -103,11 +113,17 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     SeoService.instance.setPageMeta(robots: '');
   }
 
-  void _clearFilters() => setState(() {
-        _submitted = null;
-        _typed = '';
-        _controller.clear();
-      });
+  Future<void> _openFilters() async {
+    final result = await showModalBottomSheet<ProductFilters>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => FilterBottomSheet(initialFilters: _filters),
+    );
+    if (result != null) {
+      setState(() => _filters = result);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -153,7 +169,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                     onChanged: _onTyped,
                     onSubmitted: _submit,
                     decoration: InputDecoration(
-                      hintText: 'Search the catalog...',
+                      hintText: _strings.searchPlaceholder,
                       prefixIcon: const Icon(Icons.search_rounded,
                           color: AppColors.primary),
                       suffixIcon: _typed.isNotEmpty
@@ -163,6 +179,45 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                             )
                           : null,
                     ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              GestureDetector(
+                onTap: _openFilters,
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: _filters.isActive
+                        ? AppColors.secondary
+                        : AppColors.surface,
+                    borderRadius: BorderRadius.circular(14),
+                    boxShadow: AppShadows.soft,
+                  ),
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      Icon(
+                        Icons.tune_rounded,
+                        color: _filters.isActive
+                            ? AppColors.onSecondary
+                            : AppColors.textPrimary,
+                      ),
+                      if (_filters.isActive)
+                        Positioned(
+                          top: -4,
+                          right: -4,
+                          child: Container(
+                            padding: const EdgeInsets.all(3),
+                            decoration: const BoxDecoration(
+                              color: AppColors.secondary,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(Icons.check_rounded,
+                                size: 10, color: Colors.white),
+                          ),
+                        ),
+                    ],
                   ),
                 ),
               ),
@@ -216,12 +271,12 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Recent searches', style: AppTypography.titleLarge),
+              Text(_strings.searchRecentSearches, style: AppTypography.titleLarge),
               if (history.isNotEmpty)
                 TextButton(
                   onPressed: () =>
                       ref.read(searchHistoryProvider.notifier).clear(),
-                  child: Text('Clear All',
+                  child: Text(_strings.searchClearAll,
                       style: TextStyle(
                           color: AppColors.error.withValues(alpha: 0.8))),
                 ),
@@ -229,7 +284,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           ),
         ),
         if (history.isEmpty)
-          Text('Search once and we remember it here.',
+          Text(_strings.searchEmptySubtitle,
               style: AppTypography.labelMedium.copyWith(fontStyle: FontStyle.italic))
         else
           Wrap(
@@ -256,7 +311,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         const SizedBox(height: 28),
         Row(
           children: [
-            Text('People are searching', style: AppTypography.titleLarge),
+            Text(_strings.searchPeopleAreSearching,
+                style: AppTypography.titleLarge),
             const SizedBox(width: 8),
             const Icon(Icons.trending_up_rounded,
                 size: 18, color: AppColors.textMuted),
@@ -264,7 +320,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         ),
         const SizedBox(height: 10),
         if (popular.value?.isNotEmpty != true)
-          Text('Popular searches will show up here as people use search.',
+          Text(_strings.searchTryDifferent,
               style:
                   AppTypography.labelMedium.copyWith(fontStyle: FontStyle.italic))
         else
@@ -288,7 +344,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         const SizedBox(height: 28),
         FadeInUp(
           delay: const Duration(milliseconds: 250),
-          child: _buildSectionHeader('Browse Amazon categories'),
+          child: _buildSectionHeader(_strings.searchBrowseCategories),
         ),
         const SizedBox(height: 12),
         if (categories.isEmpty)
@@ -309,7 +365,13 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   }
 
   Widget _buildResults(String query) {
-    final params = (query: query, minPrice: null, maxPrice: null);
+    final params = (
+      query: query,
+      minPrice: _filters.priceRange.start > 0 ? _filters.priceRange.start.toDouble() : null,
+      maxPrice: _filters.priceRange.end < 2000 ? _filters.priceRange.end.toDouble() : null,
+      sort: _filters.sort,
+      brands: _filters.brands,
+    );
     final catalog = ref.watch(catalogSearchProvider(params));
     final amazon = ref.watch(amazonAllProductsProvider);
     final amazonMatches = _filterAmazon(amazon.value ?? const [], query);
@@ -321,11 +383,13 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text('Catalog matches for "$query"',
-                style: AppTypography.titleLarge),
+            Expanded(
+              child: Text(_strings.searchResultsFor(query),
+                  style: AppTypography.titleLarge, maxLines: 2),
+            ),
             TextButton(
-              onPressed: _clearFilters,
-              child: Text('Clear',
+              onPressed: _openFilters,
+              child: Text(_strings.searchFilters,
                   style:
                       TextStyle(color: AppColors.error.withValues(alpha: 0.8))),
             ),
@@ -337,26 +401,27 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
             padding: EdgeInsets.all(32),
             child: Center(child: CircularProgressIndicator()),
           ),
-          error: (e, _) => Text('Search is unavailable right now.',
+          error: (e, _) => Text(_strings.errorGeneric,
               style: AppTypography.bodyMedium
                   .copyWith(color: AppColors.textSecondary)),
           data: (products) {
-            if (products.isEmpty && amazonMatches.isEmpty) {
+            final filtered = applyLocalFilters(products, params);
+            if (filtered.isEmpty && amazonMatches.isEmpty) {
               return _buildEmpty(query);
             }
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (products.isEmpty)
-                  Text('No catalog matches — but here is the Amazon hunt.',
+                if (filtered.isEmpty)
+                  Text(_strings.searchEmptySubtitle,
                       style: AppTypography.bodyMedium
                           .copyWith(color: AppColors.textSecondary))
                 else ...[
-                  Text('${products.length} in our catalog',
+                  Text('${filtered.length}',
                       style:
                           AppTypography.caption.copyWith(color: AppColors.textMuted)),
                   const SizedBox(height: 10),
-                  for (final p in products) ...[
+                  for (final p in filtered) ...[
                     PremiumProductCard(product: p),
                     const SizedBox(height: 14),
                   ],
@@ -365,7 +430,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                   const SizedBox(height: 24),
                   Row(
                     children: [
-                      Text('From Amazon', style: AppTypography.titleLarge),
+                      Text(_strings.searchAmazonResults,
+                          style: AppTypography.titleLarge),
                       const SizedBox(width: 8),
                       const Icon(Icons.shopping_bag_outlined,
                           size: 18, color: Color(0xFFFF9900)),
@@ -373,7 +439,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    'Real affiliate links — ClickShop may earn a commission.', 
+                    _strings.affiliateDisclosure,
                     style: AppTypography.caption
                         .copyWith(color: AppColors.textMuted),
                   ),
@@ -425,11 +491,10 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         children: [
           const Icon(Icons.search_off_rounded, size: 64, color: AppColors.border),
           const SizedBox(height: 16),
-          const Text('No products found', style: AppTypography.titleLarge),
+          Text(_strings.searchNoResults, style: AppTypography.titleLarge),
           const SizedBox(height: 8),
           Text(
-            'Our catalog has no match for "$query" right now. '
-            'Continue the hunt on Amazon with the same search.',
+            _strings.searchEmptyTitle,
             textAlign: TextAlign.center,
             style: AppTypography.bodyMedium
                 .copyWith(color: AppColors.textSecondary),
@@ -439,7 +504,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
             onPressed: () => openExternalLink(
                 'https://www.amazon.com/s?k=${Uri.encodeQueryComponent(query)}'),
             icon: const Icon(Icons.open_in_new_rounded),
-            label: const Text('Search on Amazon'),
+            label: Text(_strings.searchOnAmazon),
           ),
           const SizedBox(height: 8),
           const AmazonDisclosure(),

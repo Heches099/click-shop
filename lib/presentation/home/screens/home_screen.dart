@@ -8,6 +8,8 @@ import '../../../config/design_tokens.dart';
 import '../../../core/services/ads/ad_config.dart';
 import '../../../core/widgets/affiliate_disclosure.dart';
 import '../../../core/widgets/google_ad_banner.dart';
+import '../../../l10n/app_localizations.dart';
+import '../../settings/widgets/language_selector.dart';
 import '../widgets/collections_strip.dart';
 import '../widgets/banner_slider.dart';
 import '../widgets/affiliate_promo_card.dart';
@@ -22,6 +24,7 @@ class HomeScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: AppColors.background,
       body: CustomScrollView(
@@ -43,7 +46,7 @@ class HomeScreen extends ConsumerWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'Real products. Real prices. No tricks.',
+                    l10n.appTagline,
                     style: AppTypography.caption
                         .copyWith(color: AppColors.textMuted),
                   ),
@@ -129,6 +132,8 @@ SliverToBoxAdapter(
               ),
             ),
             const Spacer(),
+            const LanguageSelector(compact: true),
+            const SizedBox(width: 8),
             _buildIconButton(
               Icons.compare_arrows_rounded,
               color: Colors.amberAccent,

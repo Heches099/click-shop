@@ -6,6 +6,7 @@ import '../../../config/design_tokens.dart';
 import '../../../domain/entities/order.dart';
 import '../../home/providers/home_provider.dart';
 import '../../cart/providers/cart_provider.dart';
+import '../../../l10n/app_localizations.dart';
 import '../providers/orders_provider.dart';
 
 class OrderListScreen extends ConsumerWidget {
@@ -13,6 +14,7 @@ class OrderListScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     final orders = ref.watch(ordersProvider);
 
     final active = orders
@@ -34,12 +36,12 @@ class OrderListScreen extends ConsumerWidget {
       child: Scaffold(
         backgroundColor: AppColors.background,
         appBar: AppBar(
-          title: const Text('My Orders'),
-          bottom: const TabBar(
+          title: Text(l10n.ordersTitle),
+          bottom: TabBar(
             tabs: [
-              Tab(text: 'Active'),
-              Tab(text: 'Completed'),
-              Tab(text: 'Cancelled'),
+              Tab(text: l10n.ordersActive),
+              Tab(text: l10n.ordersCompleted),
+              Tab(text: l10n.ordersCancelled),
             ],
             indicatorColor: AppColors.primary,
             indicatorWeight: 3,
@@ -60,6 +62,7 @@ class OrderListScreen extends ConsumerWidget {
 
   Widget _buildOrderList(
       BuildContext context, WidgetRef ref, List<OrderEntity> orders) {
+    final l10n = AppLocalizations.of(context)!;
     if (orders.isEmpty) {
       return Center(
         child: Column(
@@ -68,7 +71,7 @@ class OrderListScreen extends ConsumerWidget {
             const Icon(Icons.receipt_long_outlined,
                 size: 64, color: AppColors.textHint),
             const SizedBox(height: 12),
-            const Text('No orders here yet',
+            Text(l10n.ordersEmpty,
                 style: AppTypography.titleLarge),
             const SizedBox(height: 8),
             ElevatedButton(
@@ -94,6 +97,7 @@ class OrderListScreen extends ConsumerWidget {
 
   Widget _buildOrderCard(
       BuildContext context, WidgetRef ref, OrderEntity order) {
+    final l10n = AppLocalizations.of(context)!;
     final firstItem = order.items.isNotEmpty ? order.items.first : null;
     final isActive = order.status == OrderStatus.pending ||
         order.status == OrderStatus.processing ||
@@ -181,7 +185,7 @@ class OrderListScreen extends ConsumerWidget {
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12)),
                     ),
-                    child: const Text('Track Order'),
+                    child: Text(l10n.ordersTrack),
                   ),
                 )
               else
@@ -192,7 +196,7 @@ class OrderListScreen extends ConsumerWidget {
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12)),
                     ),
-                    child: const Text('Reorder'),
+                    child: Text(l10n.ordersReorder),
                   ),
                 ),
             ],
@@ -295,11 +299,12 @@ class OrderListScreen extends ConsumerWidget {
   }
 
   void _trackOrder(BuildContext context, OrderEntity order) {
+    final l10n = AppLocalizations.of(context)!;
     showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Track Order'),
+        title: Text(l10n.ordersTrack),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [

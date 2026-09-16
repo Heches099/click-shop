@@ -23,6 +23,7 @@ import '../../recent/providers/recent_views_provider.dart';
 import '../../saved/providers/saved_provider.dart';
 import '../../home/providers/amazon_provider.dart';
 import '../providers/related_provider.dart';
+import '../../../l10n/app_localizations.dart';
 
 class ProductDetailScreen extends ConsumerStatefulWidget {
   final Product product;
@@ -610,6 +611,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
   }
 
   Widget _buildSpecifications(Product product) {
+    final l10n = AppLocalizations.of(context)!;
     return SliverPadding(
       padding: EdgeInsets.all(AppResponsive.scale(context, 24)),
       sliver: SliverToBoxAdapter(
@@ -618,7 +620,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Specifications', style: AppTypography.titleLarge),
+              Text(l10n.productSpecifications, style: AppTypography.titleLarge),
               const SizedBox(height: 12),
               ...product.specifications.entries.map((e) => Padding(
                     padding: const EdgeInsets.symmetric(vertical: 4),
@@ -668,6 +670,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
   }
 
   Widget _buildBottomAction(Product product) {
+    final l10n = AppLocalizations.of(context)!;
     final isAmazonProduct =
         product.amazonUrl != null && product.amazonUrl!.isNotEmpty;
 
@@ -734,7 +737,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                             ),
                           );
                         },
-                        text: 'Add to Bag',
+                        text: l10n.productAddToCart,
                       ),
               ),
             ],
@@ -793,6 +796,7 @@ class _RelatedGroups extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     final related = ref.watch(relatedProductsProvider(productId));
     return related.when(
       loading: () =>
@@ -803,12 +807,13 @@ class _RelatedGroups extends ConsumerWidget {
       error: (e, _) => const SizedBox.shrink(),
       data: (groups) {
         final sections = <(String, List<Product>)>[
-          if (groups.similar.isNotEmpty) ('Similar picks', groups.similar),
-          if (groups.cheaper.isNotEmpty) ('Cheaper options', groups.cheaper),
+          if (groups.similar.isNotEmpty) (l10n.productSimilar, groups.similar),
+          if (groups.cheaper.isNotEmpty)
+            (l10n.productCheaperAlternatives, groups.cheaper),
           if (groups.higherEnd.isNotEmpty)
-            ('Higher-end options', groups.higherEnd),
+            (l10n.productHigherEnd, groups.higherEnd),
           if (groups.complementary.isNotEmpty)
-            ('Pairs well with', groups.complementary),
+            (l10n.productComplementary, groups.complementary),
         ];
         if (sections.isEmpty) return const SizedBox.shrink();
         return Column(

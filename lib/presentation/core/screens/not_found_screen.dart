@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../config/design_tokens.dart';
 import '../../../core/services/seo/seo_service.dart';
+import '../../../l10n/app_localizations.dart';
 
 /// Real 404 page rendered for unmatched routes. Emits `noindex, follow` so
 /// soft-404s never get indexed.
@@ -11,6 +12,7 @@ class NotFoundScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     SeoService.instance.setPageMeta(
       title: 'Page Not Found | ClickShop',
       description: 'The page you are looking for does not exist or has moved. Browse the latest products on ClickShop.',
@@ -39,7 +41,7 @@ class NotFoundScreen extends ConsumerWidget {
               const SizedBox(height: 20),
               Text('404', style: AppTypography.h1),
               const SizedBox(height: 8),
-              const Text('Page not found', style: AppTypography.titleLarge),
+              Text(l10n.errorNotFound, style: AppTypography.titleLarge),
               const SizedBox(height: 8),
               Text(
                 'This page may have moved or never existed.',

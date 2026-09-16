@@ -10,6 +10,7 @@ import '../../../domain/entities/product.dart';
 import '../../core/widgets/premium_button.dart';
 import '../../home/providers/home_provider.dart';
 import '../providers/affiliate_provider.dart';
+import '../../../l10n/app_localizations.dart';
 
 class AffiliatePortalScreen extends ConsumerStatefulWidget {
   const AffiliatePortalScreen({super.key});
@@ -37,6 +38,7 @@ class _AffiliatePortalScreenState extends ConsumerState<AffiliatePortalScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final accountAsync = ref.watch(affiliateAccountProvider);
 
     return Scaffold(
@@ -44,7 +46,7 @@ class _AffiliatePortalScreenState extends ConsumerState<AffiliatePortalScreen> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        title: const Text('Affiliate Program', style: AppTypography.h2),
+        title: Text(l10n.affiliateTitle, style: AppTypography.h2),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded),
           onPressed: () => Navigator.pop(context),
@@ -92,9 +94,10 @@ class _AffiliatePortalScreenState extends ConsumerState<AffiliatePortalScreen> {
                       color: Colors.black, size: 26),
                 ),
                 const SizedBox(height: 16),
-                Text('Earn ${(commissionRate * 100).round()}% '
-                    'on every sale',
-                    style: AppTypography.h2.copyWith(color: Colors.white)),
+                Text(
+                  AppLocalizations.of(context)!.affiliateSubtitle,
+                  style: AppTypography.h2.copyWith(color: Colors.white),
+                ),
                 const SizedBox(height: 8),
                 Text(
                   'Share your link. Get paid when people shop. '
@@ -323,9 +326,9 @@ class _AffiliatePortalScreenState extends ConsumerState<AffiliatePortalScreen> {
                   ],
                 ),
         ),
-        const SizedBox(height: 24),
-        const FadeInUp(
-          child: Text('Products to promote', style: AppTypography.h2),
+const SizedBox(height: 24),
+        FadeInUp(
+          child: Text(AppLocalizations.of(context)!.affiliateCommissions, style: AppTypography.h2),
         ),
         const SizedBox(height: 4),
         const FadeInUp(
@@ -444,9 +447,10 @@ class _AffiliatePortalScreenState extends ConsumerState<AffiliatePortalScreen> {
   }
 
   Widget _buildPromoCodeCard(AffiliateAccount account) {
+    final l10n = AppLocalizations.of(context)!;
     return _buildValueCard(
       icon: Icons.tag_rounded,
-      title: 'Your promo code',
+      title: l10n.affiliatePromoCode,
       subtitle: 'Shoppers use it at checkout for your attribution.',
       trailing: _copyChip(account.promoCode,
           onTap: () => _copy(account.promoCode, 'Promo code copied')),
@@ -454,9 +458,10 @@ class _AffiliatePortalScreenState extends ConsumerState<AffiliatePortalScreen> {
   }
 
   Widget _buildReferralLinkCard(AffiliateAccount account) {
+    final l10n = AppLocalizations.of(context)!;
     return _buildValueCard(
       icon: Icons.link_rounded,
-      title: 'Your referral link',
+      title: l10n.affiliateLink,
       subtitle: 'Share this link — any purchase tracks to you.',
       trailing: Row(
         mainAxisSize: MainAxisSize.min,

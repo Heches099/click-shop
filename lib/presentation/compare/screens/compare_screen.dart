@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../config/design_tokens.dart';
 import '../../../core/services/events/event_tracker.dart';
 import '../../../domain/entities/product.dart';
+import '../../../l10n/app_localizations.dart';
 import '../data/compare_store.dart';
 import '../providers/compare_provider.dart';
 
@@ -15,13 +16,14 @@ class CompareScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     final compare = ref.watch(compareProvider);
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
         backgroundColor: AppColors.background,
         elevation: 0,
-        title: const Text('Compare', style: AppTypography.titleLarge),
+        title: Text(l10n.compareTitle, style: AppTypography.titleLarge),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded),
           onPressed: () => Navigator.pop(context),
@@ -35,7 +37,7 @@ class CompareScreen extends ConsumerWidget {
                   EventTracker().track('remove_from_compare', productId: p.id);
                 }
               },
-              child: const Text('Clear', style: TextStyle(color: AppColors.error)),
+              child: Text(l10n.compareRemove, style: TextStyle(color: AppColors.error)),
             ),
         ],
       ),
@@ -54,6 +56,7 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.xl),
@@ -62,12 +65,11 @@ class _EmptyState extends StatelessWidget {
           children: [
             const Icon(Icons.compare_rounded, size: 64, color: AppColors.textMuted),
             const SizedBox(height: AppSpacing.m),
-            const Text('Nothing to compare yet',
+            Text(l10n.compareEmpty,
                 style: AppTypography.titleMedium),
             const SizedBox(height: 8),
             Text(
-              'Open any product and tap "Compare" to line up your shortlist. '
-              'You can compare up to 4 products at a time.',
+              l10n.compareEmptySubtitle,
               textAlign: TextAlign.center,
               style: AppTypography.bodyMedium
                   .copyWith(color: AppColors.textSecondary),

@@ -1,6 +1,7 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'firebase_options.dart';
@@ -9,6 +10,8 @@ import 'core/services/seo/seo_service.dart';
 import 'domain/usecases/affiliate_usecase.dart';
 import 'app/routes.dart';
 import 'config/app_theme.dart';
+import 'l10n/app_localizations.dart';
+import 'presentation/settings/providers/locale_provider.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
 
 Future<void> main() async {
@@ -53,16 +56,40 @@ Future<void> _captureReferralFromLink() async {
   await useCase.trackIncomingRef(ref);
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends ConsumerStatefulWidget {
   const MyApp({super.key});
 
   @override
+  ConsumerState<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends ConsumerState<MyApp> {
+  @override
+  void initState() {
+    super.initState();
+    // Restore the visitor's saved language once Hive settings are available.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(localeProvider.notifier).restore();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final locale = ref.watch(localeProvider);
     return MaterialApp.router(
       title: 'ClickShop',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.light,
-      darkTheme: AppTheme.dark,
+      theme: AppTheme.lightForLocale(locale.languageCode),
+      darkTheme: AppTheme.darkForLocale(locale.languageCode),
+      locale: locale,
+      supportedLocales: AppLocales.supported,
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      onGenerateTitle: (context) => AppLocalizations.of(context)!.appTitle,
       routerConfig: router,
       builder: (context, child) => MediaQuery.withClampedTextScaling(
         minScaleFactor: 0.85,

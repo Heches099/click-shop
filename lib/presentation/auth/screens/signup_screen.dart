@@ -8,6 +8,7 @@ import '../../../core/utils/validators.dart';
 import '../../../core/widgets/animated_press.dart';
 import '../../core/widgets/smart_image.dart';
 import '../providers/auth_provider.dart';
+import '../../../l10n/app_localizations.dart';
 
 class SignUpScreen extends ConsumerStatefulWidget {
   const SignUpScreen({super.key});
@@ -117,6 +118,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
     });
 
     final authState = ref.watch(authProvider);
+    final l10n = AppLocalizations.of(context)!;
     final size = MediaQuery.of(context).size;
     final isWide = size.width >= 850 || size.width > size.height * 1.3;
     final backgroundFit = isWide ? BoxFit.fitHeight : BoxFit.cover;
@@ -267,9 +269,9 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                                         crossAxisAlignment:
                                             CrossAxisAlignment.start,
                                         children: [
-                                          const Text(
-                                            'SIGN UP',
-                                            style: TextStyle(
+                                          Text(
+                                            l10n.authSignUpCreate,
+                                            style: const TextStyle(
                                               color: Colors.white,
                                               fontWeight: FontWeight.w900,
                                               fontSize: 28,
@@ -278,7 +280,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                                           ),
                                           const SizedBox(height: 4),
                                           Text(
-                                            'Enter your details below to get started.',
+                                            l10n.authSignUpDetails,
                                             style: TextStyle(
                                               color: Colors.white
                                                   .withValues(alpha: 0.55),
@@ -292,7 +294,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                                                 color: Colors.white,
                                                 fontSize: 15),
                                             decoration: _inputDecoration(
-                                              hint: 'Full Name',
+                                              hint: l10n.authSignUpName,
                                               icon: Icons.person_outline,
                                             ),
                                             validator: Validators.name,
@@ -304,7 +306,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                                                 color: Colors.white,
                                                 fontSize: 15),
                                             decoration: _inputDecoration(
-                                              hint: 'Email',
+                                              hint: l10n.authSignUpEmail,
                                               icon: Icons.email_outlined,
                                             ),
                                             validator: Validators.email,
@@ -319,7 +321,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                                                 color: Colors.white,
                                                 fontSize: 15),
                                             decoration: _inputDecoration(
-                                              hint: 'Password',
+                                              hint: l10n.authSignUpPassword,
                                               icon: Icons.lock_outline,
                                             ).copyWith(
                                               suffixIcon: IconButton(
@@ -349,7 +351,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                                                 color: Colors.white,
                                                 fontSize: 15),
                                             decoration: _inputDecoration(
-                                              hint: 'Confirm Password',
+                                              hint: l10n.authSignUpConfirm,
                                               icon: Icons.lock_outline,
                                             ).copyWith(
                                               suffixIcon: IconButton(
@@ -420,9 +422,9 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                                                           strokeWidth: 2.5,
                                                         ),
                                                       )
-                                                    : const Text(
-                                                        'CREATE ACCOUNT',
-                                                        style: TextStyle(
+                                                    : Text(
+                                                        l10n.authSignUpButton,
+                                                        style: const TextStyle(
                                                           color: Colors.black,
                                                           fontWeight:
                                                               FontWeight.w900,
@@ -439,7 +441,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                                                 MainAxisAlignment.center,
                                             children: [
                                               Text(
-                                                'Already have an account?',
+                                                l10n.authSignUpHasAccount,
                                                 style: TextStyle(
                                                   color: Colors.white
                                                       .withValues(alpha: 0.5),
@@ -453,9 +455,9 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                                                   foregroundColor:
                                                       AppColors.secondary,
                                                 ),
-                                                child: const Text(
-                                                  'Sign In',
-                                                  style: TextStyle(
+                                                child: Text(
+                                                  l10n.authSignUpSignIn,
+                                                  style: const TextStyle(
                                                     fontWeight: FontWeight.w800,
                                                     fontSize: 13,
                                                     letterSpacing: 0.3,
