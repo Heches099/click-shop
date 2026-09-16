@@ -35,5 +35,12 @@ class AdConfig {
   /// Master switch. Set to true to enable ads.
   static const bool enabled = true;
 
-  static bool get isConfigured => enabled;
+  /// Real ads are only served once the placeholder publisher ID and ad-unit
+  /// slot ids have been replaced with genuine values. Drives the
+  /// [AdConfig.isConfigured] gate so placeholder zeros never hit the network.
+  static bool get isConfigured =>
+      enabled &&
+      !publisherClientId.contains('0000000000000000') &&
+      !homeTopSlot.contains('0000000000') &&
+      !productSlot.contains('0000000000');
 }

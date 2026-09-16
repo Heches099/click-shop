@@ -34,6 +34,11 @@ class Settings(BaseSettings):
     store_base_url: str = "https://clickshop.example.com"
     affiliate_commission_rate: float = 0.10
 
+    # Optional comma-separated list of trusted reverse-proxy IPs. The rate
+    # limiter only trusts X-Forwarded-For when the direct peer is listed here;
+    # leave empty to prevent header spoofing (client IP from the socket only).
+    trusted_proxy_ips: str = ""
+
     # --- Amazon Associates ---
     # Affiliate-link mode is the default and requires NO credentials.
     # Keep amazon_api_enabled=false until the Associates account is

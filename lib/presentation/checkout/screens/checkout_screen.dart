@@ -32,6 +32,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   late List<Address> _addresses;
   String? _seededUserId;
   bool _addressesSeeded = false;
+  bool _placingOrder = false;
 
   String _recipientName(AppUser? user) {
     if (user == null) return 'Guest';
@@ -620,8 +621,17 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         boxShadow: AppShadows.medium,
       ),
       child: PremiumPressableButton(
-        onPressed: _currentStep < 2 ? _nextStep : _placeOrder,
-        text: _currentStep < 2 ? 'Continue' : 'Place Order',
+        onPressed: _placingOrder
+            ? null
+            : _currentStep < 2
+                ? _nextStep
+                : _placeOrder,
+        text: _placingOrder
+            ? 'Processing…'
+            : _currentStep < 2
+                ? 'Continue'
+                : 'Place Order',
+        loading: _placingOrder,
       ),
     );
   }
@@ -634,35 +644,35 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     final items = ref.read(cartProvider);
     if (items.isEmpty) return;
 
-    final subtotal = ref.read(cartProvider.notifier).subtotal;
-    final shipping = subtotal > 500 ? 0.0 : 15.0;
-    final total = subtotal + shipping;
+    setState(() => _placingOrder = true);
 
-    // Trigger Payment
-    final paymentSuccess = await sl<PaymentService>().processPayment(
-      amount: total,
-      currency: 'usd',
+    final affiliateCode = await sl<AffiliateUseCase>().getCurrentRefCode();
+    final paymentResult = await sl<PaymentService>().processCheckout(
+      items: items,
+      shippingAddress: _addresses[_selectedAddressIndex],
+      refCode: (affiliateCode == null || affiliateCode.isEmpty)
+          ? null
+          : affiliateCode,
+      paymentMethod: _payments[_selectedPaymentIndex].toLowerCase(),
     );
 
-    if (!paymentSuccess) {
-      if (!mounted) return;
+    if (!mounted) return;
+    setState(() => _placingOrder = false);
+
+    if (!paymentResult.success) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Payment failed or cancelled. Please try again.'),
-          backgroundColor: Colors.red,
+        SnackBar(
+          content:
+              Text(paymentResult.error ?? 'Payment failed or cancelled. Please try again.'),
+          backgroundColor: AppColors.error,
         ),
       );
       return;
     }
 
-    final affiliateCode = await sl<AffiliateUseCase>().getCurrentRefCode();
-    final order = ref.read(ordersProvider.notifier).placeOrder(
-          items: items,
-          subtotal: subtotal,
-          shippingAddress: _addresses[_selectedAddressIndex],
-          affiliateCode: affiliateCode,
-        );
+    final order = paymentResult.order!;
     ref.read(cartProvider.notifier).clearCart();
+    await ref.read(ordersProvider.notifier).refresh();
 
     // Log Analytics
     await sl<AnalyticsService>().logPurchase(
@@ -671,7 +681,8 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     );
 
     // Attribute commission to the referring affiliate, if the visitor came
-    // through an affiliate tracking link (?ref=CODE).
+    // through an affiliate tracking link (?ref=CODE). The backend already
+    // credits active affiliates server-side via ref_code.
     if (affiliateCode != null && affiliateCode.isNotEmpty) {
       await sl<AffiliateUseCase>().recordSale(
         orderId: order.id,

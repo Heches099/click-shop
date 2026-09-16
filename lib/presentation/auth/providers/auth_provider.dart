@@ -39,6 +39,15 @@ class Auth extends _$Auth {
     );
   }
 
+  Future<void> signInWithGoogle() async {
+    state = const AsyncValue.loading();
+    final result = await sl<GoogleSignInUseCase>()();
+    result.fold(
+      (failure) => state = AsyncValue.error(failure, StackTrace.current),
+      (user) => state = AsyncValue.data(user),
+    );
+  }
+
   Future<void> signOut() async {
     await sl<SignOutUseCase>()();
     state = const AsyncValue.data(null);

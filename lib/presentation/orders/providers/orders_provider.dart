@@ -1,40 +1,33 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../domain/entities/cart_item.dart';
+import '../../../../core/services/service_locator.dart';
 import '../../../domain/entities/order.dart';
+import '../../../domain/repositories/order_repository.dart';
 
 final ordersProvider =
     NotifierProvider<OrdersNotifier, List<OrderEntity>>(OrdersNotifier.new);
 
 class OrdersNotifier extends Notifier<List<OrderEntity>> {
   @override
-  List<OrderEntity> build() => [];
-
-  OrderEntity placeOrder({
-    required List<CartItem> items,
-    required double subtotal,
-    required Address shippingAddress,
-    String? affiliateCode,
-  }) {
-    final shipping = subtotal > 500 ? 0.0 : 15.0;
-    final order = OrderEntity(
-      id: 'ORD-${DateTime.now().millisecondsSinceEpoch}',
-      userId: 'user_1',
-      items: items,
-      subtotal: subtotal,
-      shippingFee: shipping,
-      tax: 0,
-      total: subtotal + shipping,
-      shippingAddress: shippingAddress,
-      status: OrderStatus.processing,
-      createdAt: DateTime.now(),
-      trackingNumber: 'TRK${DateTime.now().millisecondsSinceEpoch % 1000000}',
-      affiliateCode: affiliateCode,
-    );
-    state = [order, ...state];
-    return order;
+  List<OrderEntity> build() {
+    _load();
+    return [];
   }
 
-  void cancelOrder(String id) {
+  /// Loads the signed-in user's orders from the backend.
+  Future<void> _load() async {
+    final result = await sl<OrderRepository>().getOrders();
+    result.fold(
+      (_) {/* keep whatever is shown on transient network failures */},
+      (orders) => state = orders,
+    );
+  }
+
+  /// Refreshes the list after a successful checkout.
+  Future<void> refresh() => _load();
+
+  /// Optimistically marks the order cancelled, then syncs with the backend
+  /// (which reverses any pending affiliate commission).
+  Future<void> cancelOrder(String id) async {
     state = state.map((order) {
       if (order.id != id || order.status == OrderStatus.delivered) return order;
       return OrderEntity(
@@ -51,5 +44,13 @@ class OrdersNotifier extends Notifier<List<OrderEntity>> {
         trackingNumber: order.trackingNumber,
       );
     }).toList();
+
+    final result = await sl<OrderRepository>().cancelOrder(id);
+    result.fold(
+      (_) => _load(),
+      (order) {
+        state = state.map((o) => o.id == order.id ? order : o).toList();
+      },
+    );
   }
 }

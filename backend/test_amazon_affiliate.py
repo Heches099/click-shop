@@ -108,6 +108,19 @@ settings.amazon_api_enabled = False
 settings.amazon_access_key = ""
 settings.amazon_secret_key = ""
 
+# --- 4b. By-slug lookup must never 500 when the API provider is active ---
+# A future Creators API provider that is not yet eligible raises; the endpoint
+# must degrade to a clean 404 (as documented), not expose a 500 traceback.
+settings.amazon_api_enabled = True
+settings.amazon_access_key = "DUMMY"
+settings.amazon_secret_key = "DUMMY"
+r = client.get("/v1/amazon/products/by-slug/nonexistent-product")
+check("by-slug in API mode is 404 (not 500)", r.status_code == 404, r.text[:120])
+check("by-slug in API mode leaks no traceback", "Traceback" not in r.text)
+settings.amazon_api_enabled = False
+settings.amazon_access_key = ""
+settings.amazon_secret_key = ""
+
 # --- 5. Categories endpoint ---
 r = client.get("/v1/amazon/categories")
 cats = r.json()

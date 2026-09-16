@@ -3,7 +3,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
-
 import 'firebase_options.dart';
 import 'core/services/service_locator.dart';
 import 'core/services/seo/seo_service.dart';

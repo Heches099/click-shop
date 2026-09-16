@@ -40,9 +40,9 @@ class ProductRepositoryImpl implements ProductRepository {
   }
 
   @override
-  Future<List<Product>> getProductsByCategory(String categoryId) async {
-    // In a real app, we might pass categoryId to datasource
-    final models = await remoteDataSource.getNewArrivals();
+  Future<List<Product>> getProductsByCategory(String categorySlug) async {
+    final models =
+        await remoteDataSource.getProductsByCategory(categorySlug);
     return models.map((m) => m.toEntity()).toList();
   }
 

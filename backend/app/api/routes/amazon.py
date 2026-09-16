@@ -146,7 +146,21 @@ async def get_amazon_product_by_slug(slug: str) -> dict:
     Returns 404 when the slug does not match any curated product.
     """
     provider: AffiliateProvider = get_amazon_provider()
-    products = await provider.search_products(query="", category="", item_count=100)
+    try:
+        products = await provider.search_products(query="", category="", item_count=100)
+    except AffiliateApiUnavailableError:
+        # e.g. the Creators API provider is active but not yet eligible: the
+        # by-slug lookup must degrade gracefully to a 404, never a 500.
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Amazon product not found",
+        ) from None
+    except Exception:  # pragma: no cover - defensive, never leak details
+        logger.error("Amazon product slug lookup failed.")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Amazon product temporarily unavailable",
+        ) from None
     for product in products:
         if _product_slug(product) == slug.strip().lower():
             return _product_to_out(product, product.category)

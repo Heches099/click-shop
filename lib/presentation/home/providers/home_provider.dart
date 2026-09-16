@@ -31,16 +31,12 @@ final filteredProductsProvider = FutureProvider<List<Product>>((ref) async {
   final useCase = ref.watch(productUseCaseProvider);
   final selectedCategory = ref.watch(selectedCategoryProvider);
 
-  final allProducts = await useCase.getProducts();
-
   if (selectedCategory == 'all') {
-    return allProducts;
+    return useCase.getProducts();
   }
 
-  return allProducts
-      .where((p) =>
-          p.category.toLowerCase() == selectedCategory.toLowerCase())
-      .toList();
+  // Server-side category filtering (slug-backed on the backend).
+  return useCase.getProductsByCategory(selectedCategory);
 });
 
 final featuredProductsProvider = FutureProvider<List<Product>>((ref) {

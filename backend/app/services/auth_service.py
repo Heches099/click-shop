@@ -73,12 +73,35 @@ async def verify_firebase_id_token(id_token: str) -> dict:
     email = data.get("email")
     if not email or not data.get("email_verified", False):
         raise AuthServiceError("Firebase token has no verified email")
+    # Audience validation: the token must carry an `aud` claim. When the
+    # Firebase web API key is configured it must match (Firebase ID tokens are
+    # minted for the project's API key), otherwise tokens minted for another
+    # audience would be accepted by this fallback path.
+    aud = data.get("aud")
+    if not aud:
+        raise AuthServiceError("Firebase token has no audience claim")
+    if settings.firebase_web_api_key and aud != settings.firebase_web_api_key:
+        raise AuthServiceError("Firebase token audience mismatch")
+    _validate_issuer(data)
     return {
         "sub": data.get("sub"),
         "email": email.strip().lower(),
         "name": data.get("name"),
         "picture": data.get("picture"),
     }
+
+
+GOOGLE_ISSUERS = {"accounts.google.com", "https://accounts.google.com"}
+
+
+def _validate_issuer(data: dict) -> None:
+    """Reject tokens minted by an unexpected issuer."""
+    iss = data.get("iss")
+    if not iss:
+        raise AuthServiceError("Firebase token has no issuer claim")
+    host = iss.split("://")[-1].split("/")[0] if iss else ""
+    if host not in GOOGLE_ISSUERS:
+        raise AuthServiceError("Firebase token issuer not trusted")
 
 
 async def get_or_create_user_by_email(db: AsyncSession, email: str, name: str | None = None, photo_url: str | None = None) -> User:

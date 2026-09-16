@@ -27,4 +27,4 @@ services:
         sync: false
       - key: STRIPE_WEBHOOK_SECRET
         sync: false
-    healthCheckPath: /docs
+    healthCheckPath: /v1/health

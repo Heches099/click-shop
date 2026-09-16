@@ -52,3 +52,7 @@ app.*.map.json
 
 # Firebase CLI local cache
 .firebase/
+
+# Dead code / orphaned nested repos
+android_old/
+backend/welcome-to-docker/

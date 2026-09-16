@@ -11,6 +11,7 @@ abstract class ProductRemoteDataSource {
   Future<ProductModel> getProductById(String id);
   Future<ProductModel> getProductBySlug(String slug);
   Future<List<CategoryModel>> getCategories();
+  Future<List<ProductModel>> getProductsByCategory(String categorySlug);
 }
 
 class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
@@ -55,6 +56,16 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
     final items = _extractList(response.data);
     return items
         .map((json) => CategoryModel.fromJson(_asObject(json)))
+        .toList();
+  }
+
+  @override
+  Future<List<ProductModel>> getProductsByCategory(String categorySlug) async {
+    final response = await dioClient.dio
+        .get('/products', queryParameters: {'category': categorySlug});
+    final items = _extractList(response.data);
+    return items
+        .map((json) => ProductModel.fromJson(_asObject(json)))
         .toList();
   }
 

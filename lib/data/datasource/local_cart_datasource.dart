@@ -3,38 +3,29 @@ import 'package:hive_flutter/hive_flutter.dart';
 import '../models/cart_item_model.dart';
 
 abstract class LocalCartDataSource {
-  Future<List<CartItemModel>> getCartItems();
-  Future<void> saveCartItem(CartItemModel item);
-  Future<void> removeCartItem(String productId);
-  Future<void> clearCart();
+  List<CartItemModel> getCartItems();
+  void saveAll(List<CartItemModel> items);
 }
 
+/// Hive-backed cart. The box is opened once during service-locator init so all
+/// reads/writes are synchronous and the cart survives page refreshes.
 class HiveCartDataSource implements LocalCartDataSource {
-  static const String _boxName = 'cart_box';
+  final Box<String> _box;
+
+  HiveCartDataSource(this._box);
 
   @override
-  Future<List<CartItemModel>> getCartItems() async {
-    final box = await Hive.openBox<String>(_boxName);
-    return box.values
+  List<CartItemModel> getCartItems() {
+    return _box.values
         .map((jsonStr) => CartItemModel.fromJson(jsonDecode(jsonStr)))
         .toList();
   }
 
   @override
-  Future<void> saveCartItem(CartItemModel item) async {
-    final box = await Hive.openBox<String>(_boxName);
-    await box.put(item.product.id, jsonEncode(item.toJson()));
-  }
-
-  @override
-  Future<void> removeCartItem(String productId) async {
-    final box = await Hive.openBox<String>(_boxName);
-    await box.delete(productId);
-  }
-
-  @override
-  Future<void> clearCart() async {
-    final box = await Hive.openBox<String>(_boxName);
-    await box.clear();
+  void saveAll(List<CartItemModel> items) {
+    _box.clear();
+    for (final item in items) {
+      _box.put(item.product.id, jsonEncode(item.toJson()));
+    }
   }
 }

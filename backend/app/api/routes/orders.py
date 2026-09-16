@@ -1,6 +1,6 @@
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -143,26 +143,38 @@ async def create_order(
         product = product_map[product_id]
         product.stock = max(0, product.stock - total_qty)
 
-    # Affiliate commission on checkout with a referral code.
+    # Affiliate commission on checkout with a referral code. A commission is
+    # only awarded when the referring affiliate is a DIFFERENT user than the
+    # buyer (no self-referral fraud) and the account is still active.
     if payload.ref_code and payload.ref_code.strip():
-        aff = await db.scalar(select(AffiliateAccount).where(AffiliateAccount.promo_code == payload.ref_code.strip()))
-        if aff:
-            await db.flush()  # ensure order.id is assigned
-            amount = round(total * settings.affiliate_commission_rate, 2)
-            db.add(
-                AffiliateCommission(
-                    affiliate_id=aff.id,
-                    order_id=order.id,
-                    code=aff.promo_code,
-                    order_amount=total,
-                    rate=settings.affiliate_commission_rate,
-                    amount=amount,
-                    status="pending",
-                )
+        aff = await db.scalar(
+            select(AffiliateAccount).where(
+                AffiliateAccount.promo_code == payload.ref_code.strip()
             )
-            aff.total_sales += 1
-            aff.total_commission = round(aff.total_commission + amount, 2)
-            aff.pending_balance = round(aff.pending_balance + amount, 2)
+        )
+        if aff is not None:
+            if aff.user_id == user.id:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="You cannot earn a commission on your own orders",
+                )
+            if aff.status == "active":
+                await db.flush()  # ensure order.id is assigned
+                amount = round(total * settings.affiliate_commission_rate, 2)
+                db.add(
+                    AffiliateCommission(
+                        affiliate_id=aff.id,
+                        order_id=order.id,
+                        code=aff.promo_code,
+                        order_amount=total,
+                        rate=settings.affiliate_commission_rate,
+                        amount=amount,
+                        status="pending",
+                    )
+                )
+                aff.total_sales += 1
+                aff.total_commission = round(aff.total_commission + amount, 2)
+                aff.pending_balance = round(aff.pending_balance + amount, 2)
 
     await db.commit()
     return order_out(await _get_order(db, order.id, user))
@@ -204,5 +216,25 @@ async def cancel_order(order_id: str, user: User = Depends(get_current_user), db
         product = item.product
         if product:
             product.stock += item.quantity
+    # Reverse any pending affiliate commission earned by this order so
+    # cancelled orders never pay out.
+    commission = await db.scalar(
+        select(AffiliateCommission).where(AffiliateCommission.order_id == order.id)
+    )
+    if commission is not None and commission.status in ("pending", "paying"):
+        affiliate = await db.scalar(
+            select(AffiliateAccount).where(
+                AffiliateAccount.id == commission.affiliate_id
+            )
+        )
+        if affiliate is not None:
+            affiliate.total_sales = max(0, affiliate.total_sales - 1)
+            affiliate.total_commission = round(
+                max(0.0, affiliate.total_commission - commission.amount), 2
+            )
+            affiliate.pending_balance = round(
+                max(0.0, affiliate.pending_balance - commission.amount), 2
+            )
+        commission.status = "cancelled"
     await db.commit()
     return order_out(await _get_order(db, order_id, user))

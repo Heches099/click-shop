@@ -32,7 +32,7 @@ class _GoogleAdBannerState extends State<GoogleAdBanner> {
   BannerAd? _bannerAd;
   bool _isAdLoaded = false;
 
-  bool get _shouldShow => AdConfig.enabled;
+  bool get _shouldShow => AdConfig.isConfigured;
 
   @override
   void initState() {

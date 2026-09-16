@@ -10,6 +10,7 @@ class PremiumPressableButton extends StatelessWidget {
   final double? width;
   final double height;
   final IconData? icon;
+  final bool loading;
 
   const PremiumPressableButton({
     super.key,
@@ -20,12 +21,13 @@ class PremiumPressableButton extends StatelessWidget {
     this.width,
     this.height = 56,
     this.icon,
+    this.loading = false,
   });
 
   @override
   Widget build(BuildContext context) {
     return AnimatedPress(
-      onPressed: onPressed,
+      onPressed: loading ? null : onPressed,
       child: Container(
         width: width ?? double.infinity,
         height: height,
@@ -41,22 +43,31 @@ class PremiumPressableButton extends StatelessWidget {
             ),
           ],
         ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            if (icon != null) ...[
-              Icon(icon, color: textColor ?? Colors.white, size: 20),
-              const SizedBox(width: 10),
-            ],
-            Text(
-              text,
-              style: AppTypography.bodyLarge.copyWith(
-                color: textColor ?? Colors.white,
-                fontWeight: FontWeight.bold,
+        child: loading
+            ? const SizedBox(
+                height: 22,
+                width: 22,
+                child: CircularProgressIndicator(
+                  color: Colors.white,
+                  strokeWidth: 2.5,
+                ),
+              )
+            : Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  if (icon != null) ...[
+                    Icon(icon, color: textColor ?? Colors.white, size: 20),
+                    const SizedBox(width: 10),
+                  ],
+                  Text(
+                    text,
+                    style: AppTypography.bodyLarge.copyWith(
+                      color: textColor ?? Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
               ),
-            ),
-          ],
-        ),
       ),
     );
   }

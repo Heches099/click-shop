@@ -14,18 +14,32 @@ from collections import defaultdict
 
 from fastapi import HTTPException, Request
 
+from app.core.config import settings
+
 _buckets: dict[str, list[float]] = defaultdict(list)
 
 _STATUS_429 = 429
 
+# Comma-separated list of trusted reverse-proxy IPs (e.g. Render's edge). When
+# the direct socket peer is one of these, the real client IP is taken from the
+# LAST X-Forwarded-For entry (the entry appended by the trusted proxy). For any
+# other peer the header is attacker-controlled and is ignored entirely.
+def _trusted_proxies() -> set[str]:
+    return {ip.strip() for ip in settings.trusted_proxy_ips.split(",") if ip.strip()}
+
 
 def _client_key(request: Request) -> str:
-    forwarded = request.headers.get("x-forwarded-for", "")
-    if forwarded:
-        return forwarded.split(",")[0].strip()
     if request.client is not None:
-        return request.client.host
-    return "unknown"
+        socket_ip = request.client.host
+    else:
+        return "unknown"
+
+    forwarded = request.headers.get("x-forwarded-for", "")
+    if socket_ip in _trusted_proxies() and forwarded:
+        parts = [p.strip() for p in forwarded.split(",") if p.strip()]
+        if parts:
+            return parts[-1]
+    return socket_ip
 
 
 def rate_limit(limit: int, window_seconds: int):

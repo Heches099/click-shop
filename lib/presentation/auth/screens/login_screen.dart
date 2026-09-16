@@ -51,6 +51,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     }
   }
 
+  void _signInWithGoogle() {
+    ref.read(authProvider.notifier).signInWithGoogle();
+  }
+
   InputDecoration _inputDecoration({
     required String hint,
     required IconData icon,
@@ -311,6 +315,47 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       ),
                     ),
                   ],
+                ),
+                const SizedBox(height: AppSpacing.m),
+                AnimatedPress(
+                  onPressed: authState.isLoading ? null : _signInWithGoogle,
+                  child: Container(
+                    width: double.infinity,
+                    height: 52,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.18),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Image.asset(
+                          'assets/icons/google.png',
+                          height: 20,
+                          width: 20,
+                          fit: BoxFit.contain,
+                          errorBuilder: (_, __, ___) => const Icon(
+                            Icons.g_mobiledata,
+                            color: Colors.white,
+                            size: 26,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        const Text(
+                          'Continue with Google',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 14,
+                            letterSpacing: 0.2,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
                 const SizedBox(height: AppSpacing.m),
                 Row(

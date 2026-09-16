@@ -21,6 +21,15 @@ class SignUpUseCase {
   }
 }
 
+class GoogleSignInUseCase {
+  final AuthRepository repository;
+  GoogleSignInUseCase(this.repository);
+
+  Future<Either<Failure, AppUser>> call() {
+    return repository.signInWithGoogle();
+  }
+}
+
 class SignOutUseCase {
   final AuthRepository repository;
   SignOutUseCase(this.repository);
