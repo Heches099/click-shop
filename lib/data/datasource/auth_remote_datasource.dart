@@ -68,9 +68,21 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
   @override
   Future<void> signOut() async {
-    await _firebaseAuth.signOut();
-    await _googleSignIn.signOut();
+    // Clear the local API JWT FIRST so a throwing 3rd-party sign-out (e.g.
+    // Google's web SDK when the user never used Google sign-in) can never
+    // leave a valid ClickShop session token behind.
     await _tokenStorage.clear();
+    try {
+      await _firebaseAuth.signOut();
+    } catch (_) {
+      // Firebase sign-out failure is non-fatal: a null `currentUser` is what
+      // the rest of the app relies on, and the local token is already gone.
+    }
+    try {
+      await _googleSignIn.signOut();
+    } catch (_) {
+      // Google sign-out is best-effort; nothing depends on it remining on web.
+    }
   }
 
   @override
